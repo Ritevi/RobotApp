@@ -23,6 +23,7 @@ class tcpServer extends net.Server{
         let uuid = msg.toString();
         if(this.verifyRobotId(uuid)){
             this.robotMap.set(uuid,socket);
+            this.emit("robotAdd",uuid,socket);
         }
     }
 

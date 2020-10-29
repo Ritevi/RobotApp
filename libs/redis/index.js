@@ -1,8 +1,8 @@
 const {promisify} = require('util');
-const redis = require('redis');
+const index = require('redis');
 
 
-class RedisClient extends redis.RedisClient {
+class RedisClient extends index.RedisClient {
     constructor(options) {
         super(options)
     }

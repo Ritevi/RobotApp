@@ -11,40 +11,33 @@ class wsSocket extends WebSocket.Server{
     }
 
     onConnection(socket, request, ...args){
-        socket.once("data",(msg)=> {
+        socket.once("message",(msg)=> {
             this.authUser(msg,socket);
         });
     }
 
     authUser(msg,socket){
         try {
-            let token = JSON.parse(msg.toString())
+            let token = msg;
             AuthService.verifyAccessToken(token).then(userData=>{
                 let userId = userData.userId;
                 socket.userId = userId;
                 this.userMap.set(userData.userId,socket);
+                socket.on("close",this.onCloseSocket.bind(this,socket));
+                this.emit("userAdd",userId,socket);
             }).catch(err=>{
                 throw err;
             })
         } catch (err){
             throw err;
+            socket.destroy();
             //todo socket send err
         }
 
     }
 
-    onCloseSocket(socket){
-
-    }
-
-    onMessage(msg){
-        console.log(msg);
-
-
-
-        // if(msg.type && msg.data){
-        //     this.emit(msg.type,msg.data);
-        // }
+    onCloseSocket(socket,...rest){
+        this.userMap.delete(socket.userId);
     }
 
     onError(err){

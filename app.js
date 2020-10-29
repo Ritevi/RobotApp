@@ -6,6 +6,7 @@ const logger = require('morgan');
 
 // var indexRouter = require('./routes/index');
 const authRouter = require('./routes/Auth');
+const robotRouter = require('./routes/Robot');
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // app.use('/', indexRouter);
 app.use('/auth', authRouter);
+app.use('/robot',robotRouter);
 
 app.use(function (err, req, res, next) {
     // set locals, only providing error in development
