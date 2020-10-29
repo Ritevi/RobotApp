@@ -1,12 +1,13 @@
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+const express = require('express');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const logger = require('morgan');
+// let passport = require('./libs/passport');
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+// var indexRouter = require('./routes/index');
+const authRouter = require('./routes/Auth');
 
-var app = express();
+const app = express();
 
 app.use(logger('dev'));
 app.use(express.json());
@@ -14,7 +15,22 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+// app.use(passport.initialize());
+
+// app.use('/', indexRouter);
+app.use('/auth', authRouter);
+
+app.use(function (err, req, res, next) {
+    // set locals, only providing error in development
+    console.log(err);
+    res.status(err.status || 500);
+    res.json({message:"sosate",error:err.toString()});
+
+});
+
+app.use((req,res)=>{
+    res.status(404);
+    res.json({message:"no route"});
+})
 
 module.exports = app;

@@ -8,6 +8,32 @@
 <body>
   <h1>Express</h1>
   <p>Welcome to Express</p>
+
+  <form id="form" action="" >
+    <div   class="input_msg_write">
+      <input id="msg" type="text" class="write_msg" placeholder=" Type a message" />
+      <button id="send" type="submit"></button>
+    </div>
+  </form>
+
+  <script>
+    ws = new WebSocket( 'ws://localhost:3000')
+    ws.onopen = function() {
+      alert("Соединение установлено.");
+    };
+
+    let send = document.querySelector("#form");
+    console.log(send);
+    send.onsubmit=(event)=>{
+      event.preventDefault();
+      console.log("submit");
+      let msg = document.querySelector("#msg");
+      console.log(msg.value);
+      ws.send(msg.value);
+    }
+
+  </script>
+
 </body>
 
 </html>
