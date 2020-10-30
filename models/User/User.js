@@ -29,13 +29,23 @@ User.init(
     },
     {
         sequelize,
-        modelName: "User",
+        modelName: "user",
         timestamps: false,
     }
 );
 
-User.belongsToMany(Robot,{through:"UserToRobot",as:"robot"});
-Robot.belongsToMany(User,{through:"UserToRobot",as:"user"});
+User.belongsToMany(Robot,{through:"userToRobot",as:"robot"});
+Robot.belongsToMany(User,{through:"userToRobot",as:"user"});
 
+User.prototype.getJSON = function (){
+    let returnData = this.toJSON();
+    returnData.robots = this.getRobot().then((robots)=>{
+        return robots.map((robot)=>{
+            return robot.toJSON();
+        })
+    })
+    return returnData;
+}
 
+sequelize.sync({alter:true});
 module.exports = User;

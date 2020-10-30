@@ -1,7 +1,7 @@
 const WebSocket = require('ws');
 const AuthService = require("../Auth");
-//todo users and robot Map
-//todo Event: 'headers' modify start request
+
+
 class wsSocket extends WebSocket.Server{
     constructor(options) {
         super(options);

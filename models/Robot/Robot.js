@@ -18,7 +18,7 @@ Robot.init(
     },
     {
         sequelize,
-        modelName: "Robot",
+        modelName: "robot",
         timestamps: false,
     }
 );

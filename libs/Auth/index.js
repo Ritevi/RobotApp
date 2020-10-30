@@ -12,7 +12,7 @@ let refreshStorage = new refreshSession(redisClient,redisSub);
 
 
 
-//invalidate old access token;
+//todo invalidate old access token;
 class AuthService{
     static tokenExpiresInMinutes =  30;
 
@@ -52,10 +52,10 @@ class AuthService{
                 username
             }});
         if(!user){
-            throw new AuthError(); //code,status
+            throw new AuthError(); //todo code,status
         }
         if(!await this.verifyPassword(user.hashPassword, password)){
-            throw new AuthError() //code,status
+            throw new AuthError() //todo code,status
         }else {
             let userData = {
                 userId: user.userId,
@@ -106,7 +106,6 @@ class AuthService{
     }
 
 
-    //huita why doesnt work
     static async refreshAccessToken(options){
         const {fingerprint,ua,accessToken,refreshToken} = options;
         try {
