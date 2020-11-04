@@ -17,6 +17,7 @@ class AuthService{
     static tokenExpiresInMinutes =  30;
 
     static BlackListAccess="BlackListAccess";
+
     static async register(options){
         try {
         const {username,email,password} = options;

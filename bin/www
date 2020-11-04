@@ -90,5 +90,5 @@ function onListening() {
 }
 
 
-const connector =new (require('../libs/Connector'))();
+const connector =new (require('../libs/Connector'))(require("../config").get("webSocket"));
 
