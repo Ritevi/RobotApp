@@ -11,8 +11,14 @@
   "redis": {
     "host": "10.10.0.3"
   },
-  "tcpServer": {
+  "robotWs": {
     "host": "127.0.0.1",
-    "port": "1337"
+    "port": "1337",
+    "noServer": true
+  },
+  "userWs": {
+    "host": "127.0.0.1",
+    "port": "1338",
+    "noServer": true
   }
 }

@@ -1,8 +1,7 @@
-const WebSocket = require('ws');
 const AuthService = require("../Auth");
+const wsServer = require("ws").Server;
 
-
-class wsSocket extends WebSocket.Server{
+class userWs extends wsServer{
     constructor(options) {
         super(options);
         this.on("connection",this.onConnection);
@@ -16,9 +15,11 @@ class wsSocket extends WebSocket.Server{
         });
     }
 
+
     authUser(msg,socket){
         try {
-            let token = msg;
+            //take jwt token with userId and robot Id ????
+            let token = msg.toString();
             AuthService.verifyAccessToken(token).then(userData=>{
                 let userId = userData.userId;
                 socket.userId = userId;
@@ -46,4 +47,4 @@ class wsSocket extends WebSocket.Server{
 }
 
 
-module.exports = wsSocket
+module.exports = userWs

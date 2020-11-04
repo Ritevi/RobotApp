@@ -90,5 +90,5 @@ function onListening() {
 }
 
 
-const connector =new (require('../libs/Connector/connector'))({wsServer:{server}});
+const connector =new (require('../libs/Connector'))();
 
