@@ -3,7 +3,7 @@
 ## HTTP API
 
 
-### AUTH
+#### AUTH :
 #### auth/register POST
         
 * Регистрация пользователя
@@ -67,7 +67,7 @@
      
 
 ### ROBOT
-####robot/ POST
+#### robot/ POST
         
 * Добавить робота к пользователю
         
@@ -77,9 +77,9 @@
         robotId | Уникальная строка соответствующая этому устройству | тело запроса      
                 
                 
-##WEBSOCKET API
+## WEBSOCKET API
 
-####event: 'message'
+#### event: 'message'
     
 Принимает сообщения в формате JSON
     
@@ -143,7 +143,7 @@
     
 Отправляемые события:
 
-####emit: 'message'
+#### emit: 'message'
     
 Вызывает событие, содержащее сообщение в виде JSON
 
