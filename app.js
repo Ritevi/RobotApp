@@ -28,7 +28,7 @@ app.use(function (err, req, res, next) {
     // set locals, only providing error in development
     console.log(err);
     res.status(err.status || 500);
-    res.json({message:"sosate",error:err.toString()});
+    res.json({message:"error",error:err.toString()});
 
 });
 

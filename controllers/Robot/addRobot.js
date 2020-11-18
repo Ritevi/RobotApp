@@ -5,7 +5,10 @@ module.exports =async (req,res,next)=>{
         const userId = req.body.userData.userId;
         let robotId = req.body.robotId;
         await RobotService.addRobotToUser(userId,robotId);
-        res.json({message:"okey"});
+        res.json({message: {
+                userId,
+                robotId
+            }});
     } catch (err){
         next(err);
     }

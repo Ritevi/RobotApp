@@ -53,10 +53,10 @@ class AuthService{
                 username
             }});
         if(!user){
-            throw new AuthError(); //todo code,status
+            throw new AuthError("AUTH","LOGIN","user not found",400); //todo code,status
         }
         if(!await this.verifyPassword(user.hashPassword, password)){
-            throw new AuthError() //todo code,status
+            throw new AuthError("AUTH","LOGIN","the password is incorrect",400) //todo code,status
         }else {
             let userData = {
                 userId: user.userId,
@@ -129,7 +129,7 @@ class AuthService{
                 email:user.email
             }
             let newAccessToken = await this.generateToken(userData);
-            return {newRefreshToken,newAccessToken};
+            return {refreshToken:newRefreshToken,accessToken:newAccessToken};
         } catch (e) {
             if(userId) await refreshStorage.deleteToken(userId,refreshToken);
             throw e;

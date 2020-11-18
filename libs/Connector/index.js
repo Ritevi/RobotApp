@@ -29,9 +29,9 @@ class ConnectorWS extends wsServer{
             try{
                 let jsonMsg = JSON.parse(msg.toString());
                 switch (jsonMsg.type){
-                    case "authUser":this.authUser(jsonMsg.token,socket);
+                    case "authUser":this.authUser(jsonMsg.body,socket);
                         break;
-                    case "authRobot":this.authRobot(jsonMsg.uuid,socket);
+                    case "authRobot":this.authRobot(jsonMsg.body,socket);
                         break;
                     default:
                         break;
@@ -57,7 +57,7 @@ class ConnectorWS extends wsServer{
                 this.emit(jsonMsg.type,jsonMsg); //todo verify type
                 switch (jsonMsg.type){
                     case "cmd":this.emit("cmd",socket.userId,jsonMsg.body); break;
-                    case "changeRobot":this.emit("changeRobot",socket.userId,jsonMsg.uuid); break;
+                    case "changeRobot":this.emit("changeRobot",socket.userId,jsonMsg.body); break;
                     default:
                         break;
                 }
@@ -72,7 +72,7 @@ class ConnectorWS extends wsServer{
         if(cmd){
             let robotUuid = this.userToRobot.get(userId);
             let robotSocket = this.robotMap.get(robotUuid);
-            robotSocket.send(JSON.stringify({cmd,type:"cmd"}));
+            robotSocket.send(JSON.stringify({body:cmd,type:"cmd"}));
         }
     }
 
