@@ -11,13 +11,12 @@ class ConnectorWS extends wsServer{
         this.userMap = new Map();
         this.robotMap = new Map();
         this.userToRobot = new Map();
+        this.robotToUser = new Map();
         this.on("connection",this.onConnection);
         this.on("error",this.onError);
 
         this.on("userAdd",this.onUserAdd);
         this.on("robotAdd",this.onRobotAdd);
-
-        this.on("userError",this.onUserError);
 
         this.on("cmd",this.onCmd);
         this.on("changeRobot",this.onChangeRobot);
@@ -37,6 +36,7 @@ class ConnectorWS extends wsServer{
                         break;
                 }
             } catch (err){
+                socket.send({type:"error",body:err});
                 this.emit("error",err);
             }
         });
@@ -45,6 +45,20 @@ class ConnectorWS extends wsServer{
 
     onRobotAdd(uuid,socket){
         console.log("robot add : "+uuid);
+
+        socket.on("message",(msg)=>{
+            try{
+                let jsonMsg = JSON.parse(msg.toString());
+                switch (jsonMsg.type){
+                    case "info":this.emit("info",socket.userId,jsonMsg.body); break;
+                    default:
+                        break;
+                }
+            } catch (err){
+                socket.send({type:"authRobotError",body:err})
+            }
+
+        })
     }
 
     onUserAdd(userId,socket){
@@ -54,7 +68,6 @@ class ConnectorWS extends wsServer{
             try{
 
                 let jsonMsg = JSON.parse(msg.toString());
-                this.emit(jsonMsg.type,jsonMsg); //todo verify type
                 switch (jsonMsg.type){
                     case "cmd":this.emit("cmd",socket.userId,jsonMsg.body); break;
                     case "changeRobot":this.emit("changeRobot",socket.userId,jsonMsg.body); break;
@@ -62,33 +75,58 @@ class ConnectorWS extends wsServer{
                         break;
                 }
             } catch (err){
-                this.emit("userError",err);
+                socket.send({type:"authUserError",body:err})
             }
 
         })
     }
 
     onCmd(userId,cmd){
-        if(cmd){
-            let robotUuid = this.userToRobot.get(userId);
-            let robotSocket = this.robotMap.get(robotUuid);
-            robotSocket.send(JSON.stringify({body:cmd,type:"cmd"}));
+        try {
+            if (cmd) {
+                let robotUuid = this.userToRobot.get(userId);
+                let robotSocket = this.robotMap.get(robotUuid);
+                if (!robotSocket) robotSocket.send({type: "error", body: new Error("no robot socket")});
+                robotSocket.send(JSON.stringify({body: cmd, type: "cmd"}));
+            } else {
+                throw new Error("no cmd");
+            }
+        } catch (err){
+
+        }
+    }
+
+    onInfo(uuid,info){
+        try {
+            if (info) {
+                let userId = this.robotToUser.get(uuid);
+                let userSocket = this.userMap.get(userId);
+                if (!userSocket) userSocket.send({type: "infoError", body: new Error("no user socket")});
+                userSocket.send(JSON.stringify({body: info, type: "info"}));
+            } else {
+                throw new Error("no info");
+            }
+        } catch (err){
+            let robotSocket = this.robotMap.get(uuid);
+            robotSocket.send({type:"infoError",body:err});
         }
     }
 
     onChangeRobot(userId,uuid){
         this.userToRobot.set(userId,uuid); //todo verify that user can use this robot
+        this.robotToUser.set(uuid,userId);
     }
 
-    onUserError(userId,msg){
-        console.error("userError : ",userId,msg);
-    }
 
     authRobot(msg, socket){
-        let uuid = msg.toString();
-        if(this.verifyRobotId(uuid)){
-            this.robotMap.set(uuid,socket);
-            this.emit("robotAdd",uuid,socket);
+        try {
+            let uuid = msg.toString();
+            if (this.verifyRobotId(uuid)) {
+                this.robotMap.set(uuid, socket);
+                this.emit("robotAdd", uuid, socket);
+            }
+        }catch (err){
+            socket.send({type:"authRobotError",body:err});
         }
     }
 
@@ -113,8 +151,8 @@ class ConnectorWS extends wsServer{
             })
         } catch (err){
             this.emit("error",err);
+            socket.send({type:"authUserError",body:err});
             socket.destroy();
-            //todo socket send err
         }
 
     }
