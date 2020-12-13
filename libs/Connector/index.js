@@ -65,7 +65,7 @@ class ConnectorWS extends wsServer{
 
     onUserAdd(userId,socket){
         console.log("user add : "+userId);
-        socket.send("nice");
+        socket.send("nice2");
         socket.on("message",console.log);
         socket.on("message",(msg)=>{
             try{
@@ -102,10 +102,8 @@ class ConnectorWS extends wsServer{
     onInfo(uuid,info){
         try {
             if (info) {
-                console.log(info,uuid);
                 let userId = this.robotToUser.get(uuid);
                 let userSocket = this.userMap.get(userId);
-                console.log(userSocket);
                 if (!userSocket) {
                     let robotSocket = this.robotMap.get(uuid);
                     robotSocket.send(JSON.stringify({type: "infoError", body: new Error("no user socket").toString()}));
