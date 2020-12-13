@@ -51,6 +51,7 @@ class ConnectorWS extends wsServer{
         socket.on("message",(msg)=>{
             try{
                 let jsonMsg = JSON.parse(msg.toString());
+                console.log(jsonMsg)
                 switch (jsonMsg.type){
                     case "info":this.emit("info",socket.uuid,jsonMsg.body); break;
                     default:
@@ -101,8 +102,10 @@ class ConnectorWS extends wsServer{
     onInfo(uuid,info){
         try {
             if (info) {
+                console.log(info,uuid);
                 let userId = this.robotToUser.get(uuid);
                 let userSocket = this.userMap.get(userId);
+                console.log(userSocket);
                 if (!userSocket) {
                     let robotSocket = this.robotMap.get(uuid);
                     robotSocket.send(JSON.stringify({type: "infoError", body: new Error("no user socket").toString()}));
