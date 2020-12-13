@@ -51,7 +51,6 @@ class ConnectorWS extends wsServer{
         socket.on("message",(msg)=>{
             try{
                 let jsonMsg = JSON.parse(msg.toString());
-                console.log(jsonMsg)
                 switch (jsonMsg.type){
                     case "info":this.emit("info",socket.uuid,jsonMsg.body); break;
                     default:
