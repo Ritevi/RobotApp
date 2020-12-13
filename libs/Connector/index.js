@@ -52,7 +52,7 @@ class ConnectorWS extends wsServer{
             try{
                 let jsonMsg = JSON.parse(msg.toString());
                 switch (jsonMsg.type){
-                    case "info":this.emit("info",socket.userId,jsonMsg.body); break;
+                    case "info":this.emit("info",socket.uuid,jsonMsg.body); break;
                     default:
                         break;
                 }
@@ -127,6 +127,7 @@ class ConnectorWS extends wsServer{
         try {
             let uuid = msg.toString();
             if (this.verifyRobotId(uuid)) {
+                socket.uuid=uuid;
                 this.robotMap.set(uuid, socket);
                 this.emit("robotAdd", uuid, socket);
             }
