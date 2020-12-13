@@ -57,7 +57,7 @@ class ConnectorWS extends wsServer{
                         break;
                 }
             } catch (err){
-                socket.send(JSON.stringify({type:"authRobotError",body:err.toString()}))
+                socket.send(JSON.stringify({type:"Error",body:err.toString()}))
             }
         })
     }
@@ -77,7 +77,7 @@ class ConnectorWS extends wsServer{
                         break;
                 }
             } catch (err){
-                socket.send(JSON.stringify({type:"authUserError",body:err.toString()}))
+                socket.send(JSON.stringify({type:"Error",body:err.toString()}))
             }
 
         })
