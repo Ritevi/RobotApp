@@ -57,7 +57,7 @@ class ConnectorWS extends wsServer{
                         break;
                 }
             } catch (err){
-                socket.send({type:"authRobotError",body:err.toString()})
+                socket.send(JSON.stringify({type:"authRobotError",body:err.toString()}))
             }
         })
     }
@@ -77,7 +77,7 @@ class ConnectorWS extends wsServer{
                         break;
                 }
             } catch (err){
-                socket.send({type:"authUserError",body:err.toString()})
+                socket.send(JSON.stringify({type:"authUserError",body:err.toString()}))
             }
 
         })
@@ -88,7 +88,7 @@ class ConnectorWS extends wsServer{
             if (cmd) {
                 let robotUuid = this.userToRobot.get(userId);
                 let robotSocket = this.robotMap.get(robotUuid);
-                if (!robotSocket) robotSocket.send({type: "error", body: new Error("no robot socket").toString()});
+                if (!robotSocket) robotSocket.send(JSON.stringify({type: "error", body: new Error("no robot socket").toString()}));
                 robotSocket.send(JSON.stringify({body: cmd, type: "cmd"}));
             } else {
                 throw new Error("no cmd");
@@ -103,14 +103,14 @@ class ConnectorWS extends wsServer{
             if (info) {
                 let userId = this.robotToUser.get(uuid);
                 let userSocket = this.userMap.get(userId);
-                if (!userSocket) userSocket.send({type: "infoError", body: new Error("no user socket").toString()});
+                if (!userSocket) userSocket.send(JSON.stringify({type: "infoError", body: new Error("no user socket").toString()}));
                 userSocket.send(JSON.stringify({body: info, type: "info"}));
             } else {
                 throw new Error("no info");
             }
         } catch (err){
             let robotSocket = this.robotMap.get(uuid);
-            robotSocket.send({type:"infoError",body:err.toString()});
+            robotSocket.send(JSON.stringify({type:"infoError",body:err.toString()}));
         }
     }
 
