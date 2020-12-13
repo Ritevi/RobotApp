@@ -58,7 +58,6 @@ class ConnectorWS extends wsServer{
             } catch (err){
                 socket.send({type:"authRobotError",body:err})
             }
-
         })
     }
 
@@ -162,7 +161,7 @@ class ConnectorWS extends wsServer{
         this.userMap.delete(socket.userId);
     }
     onError(err){
-        throw err;
+        console.log(err);
     }
 
 
