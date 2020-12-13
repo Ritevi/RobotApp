@@ -142,7 +142,7 @@ class ConnectorWS extends wsServer{
             let token = msg.toString();
             if(!token) this.emit("error",new Error("no token"));
 
-            throw AuthService.verifyAccessToken(token).then(userData=>{
+            AuthService.verifyAccessToken(token).then(userData=>{
                 let userId = userData.userId;
                 socket.userId = userId;
                 this.userMap.set(userData.userId,socket);
