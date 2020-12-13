@@ -38,7 +38,7 @@ class ConnectorWS extends wsServer{
                         break;
                 }
             } catch (err){
-                socket.send({type:"error",body:err.toString()});
+                socket.send(JSON.stringify({type:"error",body:err.toString()}));
                 this.emit("error",err);
             }
         });
