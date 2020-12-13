@@ -30,7 +30,7 @@
   </form>
 
   <script>
-    ws = new WebSocket( 'ws://localhost:1337')
+    ws = new WebSocket( 'ws://37.77.104.201:1337')
     ws.onopen = function() {
       console.log("open 1337")
     };
@@ -46,13 +46,13 @@
     }
 
     ws.onmessage = function (msg){
-      document.querySelector("#story").append(document.createTextNode(msg.toString()));
+      console.log("user " + msg);
     }
 
   </script>
 
   <script>
-    ws = new WebSocket( 'ws://localhost:1337')
+    ws = new WebSocket( 'ws://37.77.104.201:1337')
     ws.onopen = function() {
       console.log("open 1338")
     };
@@ -68,7 +68,7 @@
     }
 
     ws.onmessage = function (msg){
-      document.querySelector("#story2").append(document.createTextNode(msg.toString()));
+      console.log("robot " + msg);
     }
 
   </script>

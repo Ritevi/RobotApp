@@ -21,6 +21,7 @@ class ConnectorWS extends wsServer{
         this.on("cmd",this.onCmd);
         this.on("changeRobot",this.onChangeRobot);
 
+        this.on("info",this.onInfo);
     }
 
     onConnection(socket, request, ...args){
