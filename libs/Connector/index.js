@@ -103,7 +103,10 @@ class ConnectorWS extends wsServer{
             if (info) {
                 let userId = this.robotToUser.get(uuid);
                 let userSocket = this.userMap.get(userId);
-                if (!userSocket) userSocket.send(JSON.stringify({type: "infoError", body: new Error("no user socket").toString()}));
+                if (!userSocket) {
+                    let robotSocket = this.robotMap.get(uuid);
+                    robotSocket.send(JSON.stringify({type: "infoError", body: new Error("no user socket").toString()}));
+                }
                 userSocket.send(JSON.stringify({body: info, type: "info"}));
             } else {
                 throw new Error("no info");
