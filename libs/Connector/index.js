@@ -25,6 +25,7 @@ class ConnectorWS extends wsServer{
     }
 
     onConnection(socket, request, ...args){
+        socket.send("nice1");
         socket.once("message",(msg)=> {
             try{
                 let jsonMsg = JSON.parse(msg.toString());
@@ -46,7 +47,7 @@ class ConnectorWS extends wsServer{
 
     onRobotAdd(uuid,socket){
         console.log("robot add : "+uuid);
-
+        socket.send("nice2");
         socket.on("message",(msg)=>{
             try{
                 let jsonMsg = JSON.parse(msg.toString());
@@ -63,6 +64,7 @@ class ConnectorWS extends wsServer{
 
     onUserAdd(userId,socket){
         console.log("user add : "+userId);
+        socket.send("nice");
         socket.on("message",console.log);
         socket.on("message",(msg)=>{
             try{
@@ -140,14 +142,14 @@ class ConnectorWS extends wsServer{
             let token = msg.toString();
             if(!token) this.emit("error",new Error("no token"));
 
-            AuthService.verifyAccessToken(token).then(userData=>{
+            throw AuthService.verifyAccessToken(token).then(userData=>{
                 let userId = userData.userId;
                 socket.userId = userId;
                 this.userMap.set(userData.userId,socket);
                 socket.on("close",this.onCloseSocket.bind(this,socket));
                 this.emit("userAdd",userId,socket);
             }).catch(err=>{
-                throw err;
+                return err;
             })
         } catch (err){
             this.emit("error",err);
