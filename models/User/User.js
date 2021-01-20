@@ -37,13 +37,13 @@ User.init(
 User.belongsToMany(Robot,{through:"userToRobot",as:"robot"});
 Robot.belongsToMany(User,{through:"userToRobot",as:"user"});
 
-User.prototype.getJSON = function (){
-    let returnData = this.toJSON();
-    returnData.robots = this.getRobot().then((robots)=>{
-        return robots.map((robot)=>{
-            return robot.toJSON();
+User.prototype.getJSON = async function (){
+        let returnData = this.toJSON();
+        returnData.robots = await this.getRobot().then((robots)=>{
+            return robots.map((robot)=>{
+                return robot.toJSON();
+            })
         })
-    })
     return returnData;
 }
 
