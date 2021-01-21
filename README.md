@@ -112,7 +112,7 @@
     
      ```
      {
-         type: authUser,
+         type: authRobot,
          body: uuid
      }
      ```
