@@ -86,25 +86,25 @@
 Пример:
     ```
         {
-            type: AuthUser,
+            type: authUser,
             body: accessToken
         }
     ```
 
 Первое сообщение должно быть одним из двух типов:
     
-* type: 'AuthUser'        
+* type: 'authUser'        
         
      Авторизирует пользователя
      
      В body содержит accessToken юзера
      ```
      {
-        type: AuthUser,
+        type: authUser,
         body: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoicml0ZXZpIiwiZW1haWwiOiJyaXRldmlAZ21haWwuY29tIiwiaWF0IjoxNjA0MzU1NTA2LCJleHAiOjE2MDQzNTczMDZ9.5BkgyXFz70I5w1pGaRgd7B3ZcUS5HQVzxdH3IsBj0lw
      }
      ```
-* type: 'AuthRobot'
+* type: 'authRobot'
      
      Аутентифицирует машинку
      
@@ -112,7 +112,7 @@
     
      ```
      {
-         type: AuthUser,
+         type: authUser,
          body: uuid
      }
      ```
