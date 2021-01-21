@@ -91,4 +91,7 @@ function onListening() {
 
 
 const connector =new (require('../libs/Connector'))({server:server,...require("../config").get("webSocket")});
-
+app.set("robotMap",connector.robotMap);
+app.set("userMap",connector.userMap);
+app.set("userToRobot",connector.userToRobot);
+app.set("robotToUser",connector.robotToUser);

@@ -52,7 +52,7 @@ class ConnectorWS extends wsServer{
             try{
                 let jsonMsg = JSON.parse(msg.toString());
                 switch (jsonMsg.type){
-                    case "info":this.emit("info",socket.uuid,jsonMsg.body); break;
+                    case "info":this.emit("info",socket.id,jsonMsg.body); break;
                     default:
                         break;
                 }
@@ -71,8 +71,8 @@ class ConnectorWS extends wsServer{
 
                 let jsonMsg = JSON.parse(msg.toString());
                 switch (jsonMsg.type){
-                    case "cmd":this.emit("cmd",socket.userId,jsonMsg.body); break;
-                    case "changeRobot":this.emit("changeRobot",socket.userId,jsonMsg.body); break;
+                    case "cmd":this.emit("cmd",socket.id,jsonMsg.body); break;
+                    case "changeRobot":this.emit("changeRobot",socket.id,jsonMsg.body); break;
                     default:
                         break;
                 }
@@ -127,12 +127,14 @@ class ConnectorWS extends wsServer{
         try {
             let uuid = msg.toString();
             if (this.verifyRobotId(uuid)) {
-                socket.uuid=uuid;
+                socket.id=uuid;
                 this.robotMap.set(uuid, socket);
+                socket.on("close",this.onCloseSocket.bind(this,socket));
                 this.emit("robotAdd", uuid, socket);
+
             }
         }catch (err){
-            socket.send({type:"authRobotError",body:err.toString()});
+            socket.send(JSON.stringify({type:"authRobotError",body:err.toString()}));
         }
     }
 
@@ -148,7 +150,7 @@ class ConnectorWS extends wsServer{
 
             AuthService.verifyAccessToken(token).then(userData=>{
                 let userId = userData.userId;
-                socket.userId = userId;
+                socket.id = userId;
                 this.userMap.set(userData.userId,socket);
                 socket.on("close",this.onCloseSocket.bind(this,socket));
                 this.emit("userAdd",userId,socket);
@@ -163,8 +165,11 @@ class ConnectorWS extends wsServer{
 
     }
 
-    onCloseSocket(socket){
-        this.userMap.delete(socket.userId);
+    onCloseSocket(socket){ //todo add close check with sending ping to client
+        console.log("uuid "+socket.id);
+        console.log("id "+socket.id);
+        this.userMap.delete(socket.id);
+        this.robotMap.delete(socket.id);
     }
     onError(err){
         console.log(err);

@@ -9,6 +9,7 @@ const logger = require('morgan');
 const authMiddleware = require('./middlewares/Auth');
 const authRouter = require('./routes/Auth');
 const robotRouter = require('./routes/Robot');
+const debugRouter = require('./routes/Debug');
 
 const app = express();
 
@@ -23,6 +24,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 // app.use('/', indexRouter);
 app.use('/auth', authRouter);
 app.use('/robot',authMiddleware,robotRouter);
+app.use('/debug',debugRouter);
+
 
 app.use(function (err, req, res, next) {
     // set locals, only providing error in development
