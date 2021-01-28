@@ -76,7 +76,58 @@
      accessToken | jsonWebToken   | заголовок запроса ( authorization ) 
      robotId | Уникальная строка соответствующая этому устройству | тело запроса      
                 
-                
+
+### DEBUG
+#### debug/getConnectRobots GET
+        
+* Получить информацию о подлюченных роботах
+        
+* Ответ:
+    ``` 
+    {
+        message:"online robots",
+        robots:[
+        "232",
+        "233"
+        ]
+    }   
+
+
+### DEBUG
+#### debug/getConnectUsers GET
+        
+* Получить информацию о подлюченных пользователях
+
+* Ответ:
+    ``` 
+    {
+        message:"online users",
+        users:[
+        "1",
+        "2"
+        ]
+    }    
+    ```
+
+### DEBUG
+#### debug/getConnect GET
+        
+* Получить информацию о подлючениях пользователей к роботам
+
+* Ответ:
+    ``` 
+    {
+        message:"online connects",
+        userToRobot:[
+        "1":"232",
+        "2":"233"
+        ]
+    }    
+    ```
+
+
+
+
 ## WEBSOCKET API
 
 #### event: 'message'
