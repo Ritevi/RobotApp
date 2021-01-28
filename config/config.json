@@ -4,16 +4,15 @@
   "secret": "hi,ksta",
   "sequelize": {
     "dialect": "postgres",
-    "host": "10.10.0.2",
+    "host": "172.17.0.3",
     "database": "userdb",
     "charset": "utf8"
   },
   "redis": {
-    "host": "10.10.0.3"
+    "host": "172.17.0.2"
   },
   "webSocket": {
-    "host": "127.0.0.1",
-    "port": "1337",
-    "noServer": true
+    "host": "37.77.104.201",
+    "port": "1337"
   }
 }

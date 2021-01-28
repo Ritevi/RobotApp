@@ -11,20 +11,21 @@ class ConnectorWS extends wsServer{
         this.userMap = new Map();
         this.robotMap = new Map();
         this.userToRobot = new Map();
+        this.robotToUser = new Map();
         this.on("connection",this.onConnection);
         this.on("error",this.onError);
 
         this.on("userAdd",this.onUserAdd);
         this.on("robotAdd",this.onRobotAdd);
 
-        this.on("userError",this.onUserError);
-
         this.on("cmd",this.onCmd);
         this.on("changeRobot",this.onChangeRobot);
 
+        this.on("info",this.onInfo);
     }
 
     onConnection(socket, request, ...args){
+        socket.send("nice1");
         socket.once("message",(msg)=> {
             try{
                 let jsonMsg = JSON.parse(msg.toString());
@@ -37,6 +38,7 @@ class ConnectorWS extends wsServer{
                         break;
                 }
             } catch (err){
+                socket.send(JSON.stringify({type:"error",body:err.toString()}));
                 this.emit("error",err);
             }
         });
@@ -45,50 +47,94 @@ class ConnectorWS extends wsServer{
 
     onRobotAdd(uuid,socket){
         console.log("robot add : "+uuid);
+        socket.send("nice2");
+        socket.on("message",(msg)=>{
+            try{
+                let jsonMsg = JSON.parse(msg.toString());
+                switch (jsonMsg.type){
+                    case "info":this.emit("info",socket.id,jsonMsg.body); break;
+                    default:
+                        break;
+                }
+            } catch (err){
+                socket.send(JSON.stringify({type:"Error",body:err.toString()}))
+            }
+        })
     }
 
     onUserAdd(userId,socket){
         console.log("user add : "+userId);
+        socket.send("nice2");
         socket.on("message",console.log);
         socket.on("message",(msg)=>{
             try{
 
                 let jsonMsg = JSON.parse(msg.toString());
-                this.emit(jsonMsg.type,jsonMsg); //todo verify type
                 switch (jsonMsg.type){
-                    case "cmd":this.emit("cmd",socket.userId,jsonMsg.body); break;
-                    case "changeRobot":this.emit("changeRobot",socket.userId,jsonMsg.body); break;
+                    case "cmd":this.emit("cmd",socket.id,jsonMsg.body); break;
+                    case "changeRobot":this.emit("changeRobot",socket.id,jsonMsg.body); break;
                     default:
                         break;
                 }
             } catch (err){
-                this.emit("userError",err);
+                socket.send(JSON.stringify({type:"Error",body:err.toString()}))
             }
 
         })
     }
 
     onCmd(userId,cmd){
-        if(cmd){
-            let robotUuid = this.userToRobot.get(userId);
-            let robotSocket = this.robotMap.get(robotUuid);
-            robotSocket.send(JSON.stringify({body:cmd,type:"cmd"}));
+        try {
+            if (cmd) {
+                let robotUuid = this.userToRobot.get(userId);
+                let robotSocket = this.robotMap.get(robotUuid);
+                if (!robotSocket) robotSocket.send(JSON.stringify({type: "error", body: new Error("no robot socket").toString()}));
+                robotSocket.send(JSON.stringify({body: cmd, type: "cmd"}));
+            } else {
+                throw new Error("no cmd");
+            }
+        } catch (err){
+
+        }
+    }
+
+    onInfo(uuid,info){
+        try {
+            if (info) {
+                let userId = this.robotToUser.get(uuid);
+                let userSocket = this.userMap.get(userId);
+                if (!userSocket) {
+                    let robotSocket = this.robotMap.get(uuid);
+                    robotSocket.send(JSON.stringify({type: "infoError", body: new Error("no user socket").toString()}));
+                }
+                userSocket.send(JSON.stringify({body: info, type: "info"}));
+            } else {
+                throw new Error("no info");
+            }
+        } catch (err){
+            let robotSocket = this.robotMap.get(uuid);
+            robotSocket.send(JSON.stringify({type:"infoError",body:err.toString()}));
         }
     }
 
     onChangeRobot(userId,uuid){
         this.userToRobot.set(userId,uuid); //todo verify that user can use this robot
+        this.robotToUser.set(uuid,userId);
     }
 
-    onUserError(userId,msg){
-        console.error("userError : ",userId,msg);
-    }
 
     authRobot(msg, socket){
-        let uuid = msg.toString();
-        if(this.verifyRobotId(uuid)){
-            this.robotMap.set(uuid,socket);
-            this.emit("robotAdd",uuid,socket);
+        try {
+            let uuid = msg.toString();
+            if (this.verifyRobotId(uuid)) {
+                socket.id=uuid;
+                this.robotMap.set(uuid, socket);
+                socket.on("close",this.onCloseSocket.bind(this,socket));
+                this.emit("robotAdd", uuid, socket);
+
+            }
+        }catch (err){
+            socket.send(JSON.stringify({type:"authRobotError",body:err.toString()}));
         }
     }
 
@@ -104,26 +150,29 @@ class ConnectorWS extends wsServer{
 
             AuthService.verifyAccessToken(token).then(userData=>{
                 let userId = userData.userId;
-                socket.userId = userId;
+                socket.id = userId;
                 this.userMap.set(userData.userId,socket);
                 socket.on("close",this.onCloseSocket.bind(this,socket));
                 this.emit("userAdd",userId,socket);
             }).catch(err=>{
-                throw err;
+                return err;
             })
         } catch (err){
             this.emit("error",err);
+            socket.send({type:"authUserError",body:err.toString()});
             socket.destroy();
-            //todo socket send err
         }
 
     }
 
-    onCloseSocket(socket){
-        this.userMap.delete(socket.userId);
+    onCloseSocket(socket){ //todo add close check with sending ping to client
+        console.log("uuid "+socket.id);
+        console.log("id "+socket.id);
+        this.userMap.delete(socket.id);
+        this.robotMap.delete(socket.id);
     }
     onError(err){
-        throw err;
+        console.log(err);
     }
 
 

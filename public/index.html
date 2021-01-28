@@ -19,18 +19,8 @@
     </div>
   </form>
 
-  <form id="form2" action="" >
-    <div   class="input_msg_write">
-      <input id="msg2" type="text" class="write_msg" placeholder=" Type a message" />
-      <button id="send2" type="submit"></button>
-    </div>
-    <div id="story2">
-      <p>msg</p>
-    </div>
-  </form>
-
   <script>
-    ws = new WebSocket( 'ws://localhost:1337')
+    ws = new WebSocket( 'ws://37.77.104.201:1337')
     ws.onopen = function() {
       console.log("open 1337")
     };
@@ -39,36 +29,12 @@
     console.log(send);
     send.onsubmit=(event)=>{
       event.preventDefault();
-      console.log("submit");
       let msg = document.querySelector("#msg");
-      console.log(msg.value);
       ws.send(msg.value);
     }
 
     ws.onmessage = function (msg){
-      document.querySelector("#story").append(document.createTextNode(msg.toString()));
-    }
-
-  </script>
-
-  <script>
-    ws = new WebSocket( 'ws://localhost:1337')
-    ws.onopen = function() {
-      console.log("open 1338")
-    };
-
-    let send2 = document.querySelector("#form2");
-    console.log(send2);
-    send2.onsubmit=(event)=>{
-      event.preventDefault();
-      console.log("submit");
-      let msg2 = document.querySelector("#msg2");
-      console.log(msg2.value);
-      ws.send(msg2.value);
-    }
-
-    ws.onmessage = function (msg){
-      document.querySelector("#story2").append(document.createTextNode(msg.toString()));
+      console.log("client " + msg.data);
     }
 
   </script>
