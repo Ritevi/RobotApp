@@ -9,10 +9,10 @@ router.get("/",(res,req)=>{
 
 /* GET home page. */
 router.get('/auth/example',
-    passport.authenticate('oauth2'));
+    passport.authenticate('vk-oauth2'));
 
 router.get('/auth/example/callback',
-    passport.authenticate('oauth2', { failureRedirect: '/login',session:false }),
+    passport.authenticate('vk-oauth2', { failureRedirect: '/login',session:false,successRedirect:"/" }),
     function(req, res) {
       // Successful authentication, redirect home.
       res.redirect('/');
