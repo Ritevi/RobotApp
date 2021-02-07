@@ -6,22 +6,22 @@
     "start": "USER=postgres PASSWORD=postgres SECRETJWTKEY=hiksta node ./bin/www"
   },
   "dependencies": {
-    "argon2": "^0.27.0",
-    "axios": "^0.20.0",
+    "argon2": "^0.27.1",
+    "axios": "^0.21.1",
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
-    "express": "~4.16.1",
+    "express": "^4.16.4",
     "joi": "^17.2.1",
     "jsonwebtoken": "^8.5.1",
     "morgan": "~1.9.1",
     "nconf": "^0.10.0",
+    "openid-client": "^4.4.0",
     "passport": "^0.4.1",
     "passport-oauth2": "^1.5.0",
     "pg": "^8.4.1",
     "pg-hstore": "^2.3.3",
     "redis": "^3.0.2",
     "sequelize": "^6.3.5",
-    "socket.io": "^2.3.0",
     "uuid": "^8.3.1",
     "ws": "^7.3.1"
   }
