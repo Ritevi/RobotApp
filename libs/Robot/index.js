@@ -50,7 +50,7 @@ class RobotService {
     static async removeRobot(userId,robotUuid){
         try{
             let user = await User.findByPk(userId);
-            let robot= await Robot.findAll({where:{ //todo dont create
+            let robot= await Robot.findAll({where:{
                     uuid:robotUuid
                 }});
             await user.removeRobot(robot);

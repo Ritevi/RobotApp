@@ -9,4 +9,5 @@ let sequelize = new Sequelize(
   seqParams
 );
 
+sequelize.sync({alter:true})
 module.exports = sequelize;

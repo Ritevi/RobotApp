@@ -1,4 +1,4 @@
-const AuthService = require("../libs/Auth");
+const AuthService = require("../libs/Auth").AuthService;
 
 module.exports = async (req,res,next)=>{
     try {
@@ -12,6 +12,7 @@ module.exports = async (req,res,next)=>{
             res.json({message: "please login"}); // todo change
         }
     }catch (err){
+        console.log(err);
         //todo check type of error like TokenExpiredError and others, add return message
         res.json({message:"token error",err})
     }

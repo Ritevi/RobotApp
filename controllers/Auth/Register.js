@@ -1,4 +1,4 @@
-const AuthService = require("../../libs/Auth");
+const AuthService = require("../../libs/Auth").AuthService;
 
 module.exports =async (req,res,next)=>{
     try{

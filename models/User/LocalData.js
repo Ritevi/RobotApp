@@ -1,34 +1,30 @@
 const Sequelize = require("sequelize");
 const sequelize = require("../../libs/sequelize");
 
+class localData extends Sequelize.Model {}
 
-class VkData extends Sequelize.Model {}
-
-VkData.init(
+localData.init(
     {
         id:{
             primaryKey: true,
             type: Sequelize.INTEGER,
             autoIncrement:true
         },
-        uid:{
-            allowNull:false,
-            type:Sequelize.INTEGER,
+        username:{
+            type:Sequelize.STRING,
+            allowNull: false,
             unique:true
         },
-        firstName:{
+        password:{
             type:Sequelize.STRING,
-        },
-        secondName:{
-            type:Sequelize.STRING,
+            allowNull:false
         }
     },
     {
         sequelize,
-        modelName: "VkData",
+        modelName: "localData",
         timestamps: false,
     }
 );
 
-
-module.exports = VkData;
+module.exports = localData;

@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
-let passport = require('./libs/passport');
+let {passport} = require('./libs/passport');
 
 var indexRouter = require('./routes/index');
 
