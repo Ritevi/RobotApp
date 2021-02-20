@@ -89,9 +89,21 @@ function onListening() {
   debug('Listening on ' + bind);
 }
 
+process.on('unhandledRejection', (reason, p) => {
+  throw reason;
+});
+
+process.on('uncaughtException', (error) => {
+
+  console.log(error) //todo add error management
+});
+
+
+
+
 
 const connector =new (require('../libs/Connector'))({server:server,...require("../config").get("webSocket")});
 app.set("robotMap",connector.robotMap);
 app.set("userMap",connector.userMap);
 app.set("userToRobot",connector.userToRobot);
-app.set("robotToUser",connector.robotToUser);
+app.set("robotToUser",connector.robotToUser); //todo change the way you access connector from app
