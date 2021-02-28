@@ -1,4 +1,4 @@
-let {User,localData} = require('../../models/User');
+let {User,localData,vkData} = require('../../models/User');
 let argon = require('argon2');
 let AuthError = require('./AuthError');
 let jwt = require('jsonwebtoken')
@@ -12,7 +12,6 @@ let refreshStorage = new refreshSession(redisClient,redisSub);
 
 
 
-//todo invalidate old access token;
 //todo access token to refresh token;
 class AuthService{
     static tokenExpiresInMinutes =  30;
@@ -38,8 +37,7 @@ class AuthService{
                 }]
             })
             let userData = {
-                userId: user.id,
-                username: (await user.getProfile()).username,
+                userId: user.id
             }
             return userData;
         } catch (e) {
@@ -68,16 +66,20 @@ class AuthService{
                 throw new AuthError("AUTH","LOGIN","the password is incorrect",400) //todo code,status
             }else {
                 let userData = {
-                    userId: (await LocalData.getUser()).id,
-                    username: LocalData.username,
+                    userId: (await LocalData.getUser()).id
                 }
-                let refreshToken = await refreshStorage.createToken({userId:userData.userId,expiresIn: Math.floor(Date.now()/1000)+this.tokenExpiresInMinutes*60,fingerprint,ua});
-                let accessToken = await this.generateToken(userData);
-                return {refreshToken,accessToken};
+                return this.generatePairOftokens({userData,fingerprint,ua});
             }
         } catch (e) {
             throw e;
         }
+    }
+
+
+    static async generatePairOftokens(options){
+        let refreshToken = await refreshStorage.createToken({userId:options.userData.userId,expiresIn: Math.floor(Date.now()/1000)+this.tokenExpiresInMinutes*60,fingerprint:options.fingerprint,ua:options.ua});
+        let accessToken = await this.generateToken(options.userData);
+        return {refreshToken,accessToken};
     }
 
 
@@ -86,8 +88,8 @@ class AuthService{
     }
 
 
-    static async decodeToken(accessToken){
-        return jwt.decode(accessToken,process.env.SECRETJWTKEY);
+    static async decodeToken(accessToken,option={}){
+        return jwt.decode(accessToken,process.env.SECRETJWTKEY,options);
     }
 
 
@@ -102,12 +104,12 @@ class AuthService{
         }
     }
 
-    static async verifyAccessToken(token){
+    static async verifyAccessToken(token,options){
         try {
             if(await redisClient.getAsync(this.BlackListAccess+redisClient.separator+token)){
                 return false
             } else {
-                return jwt.verify(token,process.env.SECRETJWTKEY);
+                return jwt.verify(token,process.env.SECRETJWTKEY,options);
             }
         } catch (e) {
             throw e;
@@ -118,7 +120,7 @@ class AuthService{
     static async refreshAccessToken(options){
         const {fingerprint,ua,accessToken,refreshToken} = options;
         try {
-            if(!await this.verifyAccessToken(accessToken)) throw new Error("verify error : access token");
+            if(!await this.verifyAccessToken(accessToken,{ignoreExpiration:true})) throw new Error("verify error : access token");
             var {userId} = await this.decodeToken(accessToken);
             await this.addToBlackList(accessToken);
             const verify = await refreshStorage.verifyToken({userId,fingerprint,ua,refreshToken});
@@ -130,11 +132,9 @@ class AuthService{
                 expiresIn: Math.floor(Date.now()/1000)+this.tokenExpiresInMinutes*60
             });
 
-            let user = await User.findByPk(userId);
+            let user = await User.findByPk(userId); //todo rewrite this with polymorphic association
             let userData = {
-                userId: user.userId,
-                username: user.username,
-                email:user.email
+                userId: user.id
             }
             let newAccessToken = await this.generateToken(userData);
             return {refreshToken:newRefreshToken,accessToken:newAccessToken};

@@ -7,14 +7,13 @@ passport.use("vk-oauth2",new OAuth2Strategy({
         authorizationURL: 'https://oauth.vk.com/authorize',
         tokenURL: 'https://oauth.vk.com/access_token',
         clientID: "7356234",
-        clientSecret: "DeuhgWF1SMKKRYipvXfd",
+        clientSecret: "DeuhgWF1SMKKRYipvXfd", //todo rewrite this hardcode
         callbackURL: "http://localhost:3000/auth/example/callback"
     },
     function(accessToken, refreshToken, params, profile, done) {
         axios.post(`https://api.vk.com/method/users.get?user_id=${params.user_id}&v=5.52&access_token=${accessToken}`)
             .then(res=>res.data.response[0])
             .then(async (prof)=> {
-                console.log(prof);
                 let [user,created] = await User.findOrCreate({
                     where:{
                     },
@@ -34,10 +33,10 @@ passport.use("vk-oauth2",new OAuth2Strategy({
                         }
                     }]
                 })
-                console.log(user);
-                done(null,user);
+                done(null,user.toJSON());
             });
     }
 ));
+
 
 module.exports = passport;

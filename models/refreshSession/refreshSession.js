@@ -10,7 +10,7 @@ let uuidv4 = require('uuid').v4;
 const refreshSchema = joi.object({
     userId:[joi.number().required(),joi.string().required()],
     expiresIn:joi.date().timestamp('unix').raw().required(),
-    ua:joi.string().required().default(""),
+    ua:joi.string().required().default(""), //todo check if this are checking
     fingerprint:joi.string().required().default(""),
 })
 
