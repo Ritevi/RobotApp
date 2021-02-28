@@ -88,8 +88,8 @@ class AuthService{
     }
 
 
-    static async decodeToken(accessToken,option={}){
-        return jwt.decode(accessToken,process.env.SECRETJWTKEY,options);
+    static async decodeToken(accessToken){
+        return jwt.decode(accessToken);
     }
 
 
