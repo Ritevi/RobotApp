@@ -1,6 +1,6 @@
 const config = require("../../config");
 const eventEmitter= require("events");
-const AuthService = require("../Auth");
+const AuthService = require("../Auth").AuthService;
 const RobotService = require("../Robot");
 const wsServer = require("ws").Server;
 
@@ -147,7 +147,6 @@ class ConnectorWS extends wsServer{
         try {
             let token = msg.toString();
             if(!token) this.emit("error",new Error("no token"));
-
             AuthService.verifyAccessToken(token).then(userData=>{
                 let userId = userData.userId;
                 socket.id = userId;

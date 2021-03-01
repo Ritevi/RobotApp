@@ -104,7 +104,7 @@ class AuthService{
         }
     }
 
-    static async verifyAccessToken(token,options){
+    static async verifyAccessToken(token,options={}){
         try {
             if(await redisClient.getAsync(this.BlackListAccess+redisClient.separator+token)){
                 return false
@@ -120,9 +120,10 @@ class AuthService{
     static async refreshAccessToken(options){
         const {fingerprint,ua,accessToken,refreshToken} = options;
         try {
-            if(!await this.verifyAccessToken(accessToken,{ignoreExpiration:true})) throw new Error("verify error : access token");
-            var {userId} = await this.decodeToken(accessToken);
-            await this.addToBlackList(accessToken);
+	    const complete = await this.verifyAccessToken(accessToken,{ignoreExpiration:true});
+            if(!complete) throw new Error("verify error : access token");
+	    var {userId} = complete;
+            if(Date.now()<=complete.exp*1000) await this.addToBlackList(accessToken);
             const verify = await refreshStorage.verifyToken({userId,fingerprint,ua,refreshToken});
             if(!verify) throw new Error("verify error : refresh token");
             let newRefreshToken = await refreshStorage.createToken({
