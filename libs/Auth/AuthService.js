@@ -15,6 +15,7 @@ let refreshStorage = new refreshSession(redisClient,redisSub);
 //todo access token to refresh token;
 class AuthService{
     static tokenExpiresInMinutes =  30;
+    static refreshTokenExpiresInMinutes = 60*24*3;
 
     static BlackListAccess="BlackListAccess";
 
@@ -120,9 +121,9 @@ class AuthService{
     static async refreshAccessToken(options){
         const {fingerprint,ua,accessToken,refreshToken} = options;
         try {
-	    const complete = await this.verifyAccessToken(accessToken,{ignoreExpiration:true});
+	        const complete = await this.verifyAccessToken(accessToken,{ignoreExpiration:true});
             if(!complete) throw new Error("verify error : access token");
-	    var {userId} = complete;
+	        var {userId} = complete;
             if(Date.now()<=complete.exp*1000) await this.addToBlackList(accessToken);
             const verify = await refreshStorage.verifyToken({userId,fingerprint,ua,refreshToken});
             if(!verify) throw new Error("verify error : refresh token");
@@ -130,7 +131,7 @@ class AuthService{
                 userId,
                 fingerprint,
                 ua,
-                expiresIn: Math.floor(Date.now()/1000)+this.tokenExpiresInMinutes*60
+                expiresIn: Math.floor(Date.now()/1000)+this.refreshTokenExpiresInMinutes*60
             });
 
             let user = await User.findByPk(userId); //todo rewrite this with polymorphic association
