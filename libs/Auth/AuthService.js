@@ -1,149 +1,145 @@
-let {User,localData,vkData} = require('../../models/User');
-let argon = require('argon2');
-let AuthError = require('./AuthError');
-let jwt = require('jsonwebtoken')
-let refreshSession = require('../../models/refreshSession').refreshSession;
+const argon = require('argon2');
+const jwt = require('jsonwebtoken');
+const { User, localData } = require('../../models/User');
+const AuthError = require('./AuthError');
+const { RefreshSession } = require('../../models/refreshSession');
 const config = require('../../config');
 
+const RedisLib = require('../redis');
 
-let redisClient = new (require('../redis'))(config.get('redis'));
-let redisSub = new (require('../redis'))(config.get('redis'));
-let refreshStorage = new refreshSession(redisClient,redisSub);
+const redisClient = new RedisLib(config.get('redis'));
+const redisSub = new RedisLib(config.get('redis'));
 
+const refreshStorage = new RefreshSession(redisClient, redisSub);
 
+// todo access token to refresh token;
+class AuthService {
+    static tokenExpiresInMinutes = 60;
 
-//todo access token to refresh token;
-class AuthService{
-    static tokenExpiresInMinutes =  30;
-    static refreshTokenExpiresInMinutes = 60*24*3;
+    static refreshTokenExpiresInMinutes = 60 * 24 * 3;
 
-    static BlackListAccess="BlackListAccess";
+    static BlackListAccess = 'BlackListAccess';
 
-    static async register(options){
-        try {
-            const {username,password} = options;
+    static async register(options) {
+      const { username, password } = options;
 
-            let hashPassword = await this.hashPassword(password);
+      const hashPassword = await this.hashPassword(password);
 
-            let user = await User.create({
-                profileType:"localData",
-                localData:{
-                    password:hashPassword,
-                    username:username
-                }
-            },{
-                include:[{
-                    association:User.associations.localData,
-                    as:"localData"
-                }]
-            })
-            let userData = {
-                userId: user.id
-            }
-            return userData;
-        } catch (e) {
-            throw e;
-        }
-    }
-    static async hashPassword(password){
-        return argon.hash(password);
+      const user = await User.create({
+        profileType: 'localData',
+        localData: {
+          password: hashPassword,
+          username,
+        },
+      }, {
+        include: [{
+          association: User.associations.localData,
+          as: 'localData',
+        }],
+      });
+      return {
+        userId: user.id,
+      };
     }
 
-    static async verifyPassword(hashPassword,password){
-        return argon.verify(hashPassword,password);
+    static async hashPassword(password) {
+      return argon.hash(password);
     }
 
-    static async login(options){
-        try {
-            const {username,password,fingerprint,ua}=options;
-            let LocalData = await localData.findOne({where:{
-                    username:username
-                }});
-            if(!LocalData){
-                throw new AuthError("AUTH","LOGIN","user not found",400); //todo code,status
-            }
-            let hashPassword = LocalData.password;
-            if(!await this.verifyPassword(hashPassword, password)){
-                throw new AuthError("AUTH","LOGIN","the password is incorrect",400) //todo code,status
-            }else {
-                let userData = {
-                    userId: (await LocalData.getUser()).id
-                }
-                return this.generatePairOftokens({userData,fingerprint,ua});
-            }
-        } catch (e) {
-            throw e;
-        }
+    static async verifyPassword(hashPassword, password) {
+      return argon.verify(hashPassword, password);
     }
 
-
-    static async generatePairOftokens(options){
-        let refreshToken = await refreshStorage.createToken({userId:options.userData.userId,expiresIn: Math.floor(Date.now()/1000)+this.tokenExpiresInMinutes*60,fingerprint:options.fingerprint,ua:options.ua});
-        let accessToken = await this.generateToken(options.userData);
-        return {refreshToken,accessToken};
+    static async login(options) {
+      const {
+        username, password, fingerprint, ua,
+      } = options;
+      const LocalData = await localData.findOne({
+        where: {
+          username,
+        },
+      });
+      if (!LocalData) {
+        throw new AuthError('AUTH', 'LOGIN', 'user not found', 400); // todo code,status
+      }
+      const hashPassword = LocalData.password;
+      if (!await this.verifyPassword(hashPassword, password)) {
+        throw new AuthError('AUTH', 'LOGIN', 'the password is incorrect', 400); // todo code,status
+      } else {
+        const userData = {
+          userId: (await LocalData.getUser()).id,
+        };
+        return this.generatePairOftokens({ userData, fingerprint, ua });
+      }
     }
 
-
-    static async generateToken(data){
-        return jwt.sign(data,process.env.SECRETJWTKEY,{expiresIn: this.tokenExpiresInMinutes*60});
+    static async generatePairOftokens(options) {
+      const refreshToken = await refreshStorage.createToken({
+        userId: options.userData.userId,
+        expiresIn: Math.floor(Date.now() / 1000) + this.tokenExpiresInMinutes * 60,
+        fingerprint: options.fingerprint,
+        ua: options.ua,
+      });
+      const accessToken = await this.generateToken(options.userData);
+      return { refreshToken, accessToken };
     }
 
-
-    static async decodeToken(accessToken){
-        return jwt.decode(accessToken);
+    static async generateToken(data) {
+      return jwt.sign(data, process.env.SECRETJWTKEY, {
+        expiresIn: this.tokenExpiresInMinutes * 60,
+      });
     }
 
-
-    static async addToBlackList(token){
-        try {
-            if(typeof token == "string"){
-                let decodedToken = await jwt.decode(token);
-                return !!redisClient.setAsync(this.BlackListAccess+redisClient.separator+token,true,'EX',Math.floor(decodedToken.exp-Date.now()/1000));
-            }
-        } catch (e) {
-            throw e;
-        }
+    static async decodeToken(accessToken) {
+      return jwt.decode(accessToken);
     }
 
-    static async verifyAccessToken(token,options={}){
-        try {
-            if(await redisClient.getAsync(this.BlackListAccess+redisClient.separator+token)){
-                return false
-            } else {
-                return jwt.verify(token,process.env.SECRETJWTKEY,options);
-            }
-        } catch (e) {
-            throw e;
-        }
+    static async addToBlackList(token) {
+      if (typeof token === 'string') {
+        const decodedToken = await jwt.decode(token);
+        return !!redisClient.setAsync(this.BlackListAccess + redisClient.separator + token, true, 'EX', Math.floor(decodedToken.exp - Date.now() / 1000));
+      }
+      throw new Error('value must be token string');
     }
 
+    static async verifyAccessToken(token, options = {}) {
+      if (await redisClient.getAsync(this.BlackListAccess + redisClient.separator + token)) {
+        return false;
+      }
+      return jwt.verify(token, process.env.SECRETJWTKEY, options);
+    }
 
-    static async refreshAccessToken(options){
-        const {fingerprint,ua,accessToken,refreshToken} = options;
-        try {
-	        const complete = await this.verifyAccessToken(accessToken,{ignoreExpiration:true});
-            if(!complete) throw new Error("verify error : access token");
-	        var {userId} = complete;
-            if(Date.now()<=complete.exp*1000) await this.addToBlackList(accessToken);
-            const verify = await refreshStorage.verifyToken({userId,fingerprint,ua,refreshToken});
-            if(!verify) throw new Error("verify error : refresh token");
-            let newRefreshToken = await refreshStorage.createToken({
-                userId,
-                fingerprint,
-                ua,
-                expiresIn: Math.floor(Date.now()/1000)+this.refreshTokenExpiresInMinutes*60
-            });
+    static async refreshAccessToken(options) {
+      const {
+        fingerprint, ua, accessToken, refreshToken,
+      } = options;
+      let userId;
+      try {
+        const complete = await this.verifyAccessToken(accessToken, { ignoreExpiration: true });
+        if (!complete) throw new Error('verify error : access token');
+        userId = complete.userId;
+        if (Date.now() <= complete.exp * 1000) await this.addToBlackList(accessToken);
+        const verify = await refreshStorage.verifyToken({
+          userId, fingerprint, ua, refreshToken,
+        });
+        if (!verify) throw new Error('verify error : refresh token');
+        const newRefreshToken = await refreshStorage.createToken({
+          userId,
+          fingerprint,
+          ua,
+          expiresIn: Math.floor(Date.now() / 1000) + this.refreshTokenExpiresInMinutes * 60,
+        });
 
-            let user = await User.findByPk(userId); //todo rewrite this with polymorphic association
-            let userData = {
-                userId: user.id
-            }
-            let newAccessToken = await this.generateToken(userData);
-            return {refreshToken:newRefreshToken,accessToken:newAccessToken};
-        } catch (e) {
-            if(userId) await refreshStorage.deleteToken(userId,refreshToken);
-            throw e;
-        }
+        const user = await User.findByPk(userId); // todo rewrite this with polymorphic association
+        const userData = {
+          userId: user.id,
+        };
+        const newAccessToken = await this.generateToken(userData);
+        return { refreshToken: newRefreshToken, accessToken: newAccessToken };
+      } catch (e) {
+        if (userId) await refreshStorage.deleteToken(userId, refreshToken);
+        throw e;
+      }
     }
 }
 

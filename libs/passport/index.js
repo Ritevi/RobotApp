@@ -1,3 +1,3 @@
-let passport = require("./passport")
+const passport = require('./passport');
 
 exports.passport = passport;

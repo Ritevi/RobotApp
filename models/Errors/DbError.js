@@ -1,16 +1,16 @@
 class DbError extends Error {
-    constructor(name, code, message) {
-        super(arguments);
-        this.name = name;
-        this.code = code;
-        this.message = message || [name, code].join(" ");
-        this.error = {};
-    }
+  constructor(name, code, message) {
+    super(name + code);
+    this.name = name;
+    this.code = code;
+    this.message = message || [name, code].join(' ');
+    this.error = {};
+  }
 
-    toUser() {
-        let { error, ...rest } = this;
-        return rest;
-    }
+  toUser() {
+    const { error, ...rest } = this;
+    return rest;
+  }
 }
 
 module.exports = DbError;

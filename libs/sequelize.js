@@ -1,13 +1,14 @@
-let config = require("../config");
-let Sequelize = require("sequelize");
-const seqParams = config.get("sequelize");
+const Sequelize = require('sequelize');
+const config = require('../config');
 
-let sequelize = new Sequelize(
+const seqParams = config.get('sequelize');
+
+const sequelize = new Sequelize(
   seqParams.database,
   process.env.USER,
   process.env.PASSWORD,
-  seqParams
+  seqParams,
 );
 
-sequelize.sync({alter:true})
+sequelize.sync({ alter: true });
 module.exports = sequelize;

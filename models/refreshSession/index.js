@@ -1,3 +1,3 @@
-let refreshSession = require('./refreshSession')
+const refreshSession = require('./refreshSession');
 
 exports.refreshSession = refreshSession;

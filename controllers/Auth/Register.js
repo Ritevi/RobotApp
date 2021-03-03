@@ -1,10 +1,10 @@
-const AuthService = require("../../libs/Auth").AuthService;
+const { AuthService } = require('../../libs/Auth');
 
-module.exports =async (req,res,next)=>{
-    try{
-        let user = await AuthService.register(req.body);
-        res.json(user)
-    } catch (err){
-        next(err);
-    }
-}
+module.exports = async (req, res, next) => {
+  try {
+    const user = await AuthService.register(req.body);
+    res.json(user);
+  } catch (err) {
+    next(err);
+  }
+};

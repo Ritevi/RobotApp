@@ -1,181 +1,169 @@
-let joi = require('joi');
-let uuidv4 = require('uuid').v4;
+const joi = require('joi');
+const uuidv4 = require('uuid').v4;
 
+// more test
 
-//more test
+// mb delete joi on delete,get, ?
 
-//mb delete joi on delete,get, ?
-
-//rewrite them 2
+// rewrite them 2
 const refreshSchema = joi.object({
-    userId: [joi.number().required(), joi.string().required()],
-    expiresIn: joi.date().timestamp('unix').raw().required(),
-    ua: joi.string().required().default(""), //todo check if this are checking
-    fingerprint: joi.string().required().default(""),
-})
+  userId: [joi.number().required(), joi.string().required()],
+  expiresIn: joi.date().timestamp('unix').raw().required(),
+  ua: joi.string().required().default(''), // todo check if this are checking
+  fingerprint: joi.string().required().default(''),
+});
 
 const tokenSchema = joi.object({
-    userId: [joi.number().required(), joi.string().required()],
-    refreshToken: joi.string().uuid().required(),
-    ua: joi.string().required().default(""),
-    fingerprint: joi.string().required().default(""),
-    expiresIn: joi.date().timestamp('unix').raw(),
-    createdAt: joi.date().timestamp('unix').raw()
-})
+  userId: [joi.number().required(), joi.string().required()],
+  refreshToken: joi.string().uuid().required(),
+  ua: joi.string().required().default(''),
+  fingerprint: joi.string().required().default(''),
+  expiresIn: joi.date().timestamp('unix').raw(),
+  createdAt: joi.date().timestamp('unix').raw(),
+});
 
+/*
+ think about get pair of access and refresh token in redis to verify,
+  that this access token belongs to some refresh token
+*/
+class RefreshSession {
+  constructor(storage, subscriber, sessionMaxCount = 5) {
+    this.storage = storage;
+    this.subscriber = subscriber;
+    this.collectionName = 'refreshSession';
+    this.collectionTtlTokens = 'ttlTokens';
+    this.sessionMaxCount = sessionMaxCount;
 
-//think about get pair of access and refresh token in redis to verify, that this access token belongs to some refresh token
-class refreshSession {
-    constructor(storage, subscriber, sessionMaxCount = 5) {
-        this.storage = storage;
-        this.subscriber = subscriber;
-        this.collectionName = "refreshSession";
-        this.collectionTtlTokens = "ttlTokens";
-        this.sessionMaxCount = sessionMaxCount;
+    // redis-cli: config set notify-keyspace-events KEx
+    this.subscriber.psubscribeAsync('__keyevent*__:expired');
+    this.subscriber.on('pmessage', this.subscribeCb);
+  }
 
-        // redis-cli: config set notify-keyspace-events KEx
-        this.subscriber.psubscribeAsync("__keyevent*__:expired");
-        this.subscriber.on("pmessage", this.subscribeCb);
+  async createToken(options) {
+    const refreshSession = await refreshSchema.validateAsync(options);
+
+    refreshSession.refreshToken = await uuidv4();
+    refreshSession.createdAt = Math.floor(Date.now() / 1000);
+
+    const tokenPath = await this.getTokenPath(refreshSession.userId, refreshSession.refreshToken);
+    const ttlTokenPath = await this.getTtlTokenPath(refreshSession.userId);
+
+    const tokensCount = await this.storage.zcardAsync(ttlTokenPath);
+    if (tokensCount >= this.sessionMaxCount) await this.removeOldToken(refreshSession.userId);
+
+    await this.storage.zaddAsync(ttlTokenPath,
+      refreshSession.createdAt,
+      refreshSession.refreshToken);
+
+    await Promise.all(Object.keys(refreshSession).map(async (key) => {
+      if (key !== 'refreshToken' && key !== 'userId') {
+        await this.storage.hsetAsync(tokenPath, key, refreshSession[key]);
+      }
+    }));
+
+    await this.storage.expireatAsync(tokenPath, refreshSession.expiresIn);
+
+    return refreshSession.refreshToken;
+  }
+
+  // arg[0] = userId, arg[1] = refreshToken or arg[0] = tokenPath
+  async deleteToken(...args) {
+    let tokenPath;
+    if (args.length === 1) {
+      [tokenPath] = args;
+    } else {
+      tokenPath = await this.getTokenPath(args[0], args[1]);
     }
 
+    const [, userId, refreshToken] = tokenPath.split(this.storage.separator);
+    await this.storage.zremAsync(this.getTtlTokenPath(userId), refreshToken);
+    return this.storage.delAsync(tokenPath);
+  }
 
-    async createToken(options) {
-        try {
-            let refreshSession = await refreshSchema.validateAsync(options)
+  async getTokens(userId) {
+    await joi.number().required().validateAsync(userId);
 
-            refreshSession.refreshToken = await uuidv4();
-            refreshSession.createdAt = Math.floor(Date.now() / 1000);
+    const ttlTokenPath = await this.getTtlTokenPath(userId);
+    const tokensArr = new Array(await this.storage.zrangeAsync(ttlTokenPath, '0', '-1'));
+    const tokenDescriptionArr = [];
+    await Promise.all(tokensArr.map(async (token) => {
+      tokenDescriptionArr.push(await this.getTokenDescription(userId, token));
+    })); // todo check if this work, btw you dont need this
+    return tokenDescriptionArr;
+  }
 
-            let tokenPath = await this.getTokenPath(refreshSession.userId, refreshSession.refreshToken);
-            let ttlTokenPath = await this.getTtlTokenPath(refreshSession.userId);
-
-            let tokensCount = await this.storage.zcardAsync(ttlTokenPath);
-            if (tokensCount >= this.sessionMaxCount) await this.removeOldToken(refreshSession.userId);
-
-            await this.storage.zaddAsync(ttlTokenPath, refreshSession.createdAt, refreshSession.refreshToken);
-
-            for (let key in refreshSession) {
-                if (key === "refreshToken" || key === "userId") continue;
-                await this.storage.hsetAsync(tokenPath, key, refreshSession[key]);
-            }
-
-            await this.storage.expireatAsync(tokenPath, refreshSession.expiresIn);
-
-            return refreshSession.refreshToken;
-        } catch (e) {
-            throw e;
-        }
+  // arg[0] = userId, arg[1] = refreshToken or arg[0] = tokenPath
+  async getTokenDescription(...args) {
+    let tokenPath;
+    if (args.length === 1) {
+      [tokenPath] = args;
+    } else {
+      tokenPath = this.getTokenPath(args[0], args[1]);
     }
+    const obj = await this.storage.hgetallAsync(tokenPath);
+    if (obj == null) throw new Error('no refreshToken');
 
-    //arg[0] = userId, arg[1] = refreshToken or arg[0] = tokenPath
-    async deleteToken(...args) {
-        try {
-            let tokenPath;
-            if (args.length === 1) {
-                tokenPath = args[0];
-            } else {
-                tokenPath = await this.getTokenPath(args[0], args[1]);
-            }
+    const [, userId, refreshToken] = tokenPath.split(this.storage.separator);
+    obj.userId = userId;
+    obj.refreshToken = refreshToken;
+    return obj;
+  }
 
-            let [colName, userId, refreshToken] = tokenPath.split(this.storage.separator);
-            await this.storage.zremAsync(this.getTtlTokenPath(userId), refreshToken);
-            return this.storage.delAsync(tokenPath);
-        } catch (e) {
-            throw e;
-        }
-    }
+  getTokenPath(userId, refreshToken) {
+    return this.collectionName
+        + this.storage.separator
+        + userId
+        + this.storage.separator
+        + refreshToken;
+  }
 
-    async getTokens(userId) {
-        try {
-            await joi.number().required().validateAsync(userId);
+  getTtlTokenPath(userId) {
+    return this.collectionTtlTokens + this.storage.separator + userId;
+  }
 
-            let ttlTokenPath = await this.getTtlTokenPath(userId);
-            let tokensArr = await this.storage.zrangeAsync(ttlTokenPath, "0", "-1");
-            let tokenDescriptionArr = [];
-            for (let token of tokensArr) {
-                tokenDescriptionArr.push(await this.getTokenDescription(userId, token));
-            }
-            return tokenDescriptionArr;
-        } catch (e) {
-            throw e;
-        }
-    }
+  // dont need check expire, because key will be deleted after time expired
+  async verifyToken(refreshSession) {
+    const refreshValidated = await tokenSchema.validateAsync(refreshSession);
 
-    //arg[0] = userId, arg[1] = refreshToken or arg[0] = tokenPath
-    async getTokenDescription(...args) {
-        try {
-            let tokenPath;
-            if (args.length === 1) {
-                tokenPath = args[0];
-            } else {
-                tokenPath = this.getTokenPath(args[0], args[1]);
-            }
-            let obj = await this.storage.hgetallAsync(tokenPath);
-            if (obj == null) throw new Error("no refreshToken");
+    const token = await this.getTokenDescription(refreshValidated.userId,
+      refreshValidated.refreshToken);
+    if (token == null) return false;
+    await this.deleteToken(refreshValidated.userId, refreshValidated.refreshToken);
 
-            let [colName, userId, refreshToken] = tokenPath.split(this.storage.separator);
-            obj.userId = userId;
-            obj.refreshToken = refreshToken
-            return obj;
-        } catch (e) {
-            throw e;
-        }
-    }
+    const validatedToken = await tokenSchema.validateAsync(token);
 
-    getTokenPath(userId, refreshToken) {
-        return this.collectionName + this.storage.separator + userId + this.storage.separator + refreshToken;
-    }
+    await Promise.all(Object.keys(token).map(async (key) => {
+      if (key !== 'createdAt' && key !== 'expiresIn') {
+        if (validatedToken[key] !== refreshValidated[key]) throw new Error('values are not equal');
+      }
+    }));
 
-    getTtlTokenPath(userId) {
-        return this.collectionTtlTokens + this.storage.separator + userId;
-    }
+    // for (const key in token) {
+    //   if (key === 'createdAt' || key === 'expiresIn') continue;
+    //   if (validatedToken[key] !== refreshValidated[key]) return false
+    //
+    // }
+    return true;
+  }
 
-    //dont need check expire, because key will be deleted after time expired
-    async verifyToken(refreshSession) {
-        try {
-            let refreshValidated = await tokenSchema.validateAsync(refreshSession);
+  async removeOldToken(userId) {
+    await joi.number().required().validateAsync(userId);
 
-            let token = await this.getTokenDescription(refreshValidated.userId, refreshValidated.refreshToken);
-            if (token == null) return false;
-            await this.deleteToken(refreshValidated.userId, refreshValidated.refreshToken);
+    const ttlTokenPath = await this.getTtlTokenPath(userId);
 
-            let validatedToken = await tokenSchema.validateAsync(token);
+    const [token] = await this.storage.zpopminAsync(ttlTokenPath);
+    const tokensPath = await this.getTokenPath(userId, token);
 
-            for (let key in token) {
-                if (key === "createdAt" || key === "expiresIn") continue;
-                if (validatedToken[key] !== refreshValidated[key]) return false;
-            }
-            return true
-        } catch (e) {
-            throw e;
-        }
-    }
-
-
-    async removeOldToken(userId) {
-        try {
-            await joi.number().required().validateAsync(userId);
-
-            let ttlTokenPath = await this.getTtlTokenPath(userId);
-
-            let [token, Date] = await this.storage.zpopminAsync(ttlTokenPath);
-            let tokensPath = await this.getTokenPath(userId, token);
-
-            return this.storage.delAsync(tokensPath);
-        } catch (e) {
-            throw e;
-        }
-    }
+    return this.storage.delAsync(tokensPath);
+  }
 
     subscribeCb = (pattern, key, refreshPath) => {
-        let [DbName, userId, token] = refreshPath.split(":");
-        if (DbName === this.collectionName) {
-            let ttlTokenPath = this.getTtlTokenPath(userId);
-            this.storage.zremAsync(ttlTokenPath, token);
-        }
+      const [DbName, userId, token] = refreshPath.split(':');
+      if (DbName === this.collectionName) {
+        const ttlTokenPath = this.getTtlTokenPath(userId);
+        this.storage.zremAsync(ttlTokenPath, token);
+      }
     }
-
 }
 
-
-module.exports = refreshSession;
+module.exports = RefreshSession;

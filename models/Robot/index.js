@@ -1,3 +1,3 @@
-let Robot = require("./Robot");
+const Robot = require('./Robot');
 
 exports.Robot = Robot;

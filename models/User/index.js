@@ -1,6 +1,6 @@
-let User = require('./User');
-let vkData = require('./VkData');
-let localData = require('./LocalData');
+const User = require('./User');
+const vkData = require('./VkData');
+const localData = require('./LocalData');
 
 exports.User = User;
 exports.vkData = vkData;

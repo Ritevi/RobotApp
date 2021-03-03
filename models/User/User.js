@@ -1,93 +1,95 @@
-const Sequelize = require("sequelize");
-const sequelize = require("../../libs/sequelize");
-const Robot = require("../Robot").Robot;
-const localData = require("./LocalData");
-const vkData = require("./VkData");
+const Sequelize = require('sequelize');
+const sequelize = require('../../libs/sequelize');
+const { Robot } = require('../Robot');
+const localData = require('./LocalData');
+const vkData = require('./VkData');
 
-const uppercaseFirst = str => `${str[0].toUpperCase()}${str.substr(1)}`;
+const uppercaseFirst = (str) => `${str[0].toUpperCase()}${str.substr(1)}`;
 
 class User extends Sequelize.Model {}
 
 User.init(
-    {
-        id:{
-            primaryKey: true,
-            type: Sequelize.INTEGER,
-            autoIncrement:true
-        },
-        profileType:{
-            type:Sequelize.STRING,
-            allowNull: false
-        }
+  {
+    id: {
+      primaryKey: true,
+      type: Sequelize.INTEGER,
+      autoIncrement: true,
     },
-    {
-        sequelize,
-        modelName: "user",
-        timestamps: true,
-    }
+    profileType: {
+      type: Sequelize.STRING,
+      allowNull: false,
+    },
+  },
+  {
+    sequelize,
+    modelName: 'user',
+    timestamps: true,
+  },
 );
 
-User.prototype.getProfile = async function (options){
-    if (!this.profileType) return Promise.resolve(null);
-    const mixinMethodName = `get${uppercaseFirst(this.profileType)}`;
-    return this[mixinMethodName](options);
-}
+User.prototype.getProfile = async function getProfile(options) {
+  if (!this.profileType) return Promise.resolve(null);
+  const mixinMethodName = `get${uppercaseFirst(this.profileType)}`;
+  return this[mixinMethodName](options);
+};
 
-vkData.hasOne(User,{
-    foreignKey:'profileId',
-    constraints:false,
-    scope:{
-        profileType:"vkData"
-    },
-    as:"user"
-})
+vkData.hasOne(User, {
+  foreignKey: 'profileId',
+  constraints: false,
+  scope: {
+    profileType: 'vkData',
+  },
+  as: 'user',
+});
 
-User.belongsTo(vkData,{foreignKey:"profileId",constraints:false,as:"vkData"})
+User.belongsTo(vkData, { foreignKey: 'profileId', constraints: false, as: 'vkData' });
 
-localData.hasOne(User,{
-    foreignKey:'profileId',
-    constraints:false,
-    scope:{
-        profileType:"localData"
-    },
-    as:"user"
-})
+localData.hasOne(User, {
+  foreignKey: 'profileId',
+  constraints: false,
+  scope: {
+    profileType: 'localData',
+  },
+  as: 'user',
+});
 
-User.belongsTo(localData,{foreignKey:"profileId",constraints:false,as:"localData"})
+User.belongsTo(localData, { foreignKey: 'profileId', constraints: false, as: 'localData' });
 
-//todo more automatically
-User.addHook("afterFind",findResult=>{
-    if (!Array.isArray(findResult)) findResult = [findResult];
-    for (const instance of findResult) {
-        if (instance==null) continue;
-        if (instance.profileType === "localData" && instance.localData !== undefined) {
-            instance.profile = instance.localData;
-        } else if (instance.profileType === "vkData" && instance.vkData !== undefined) {
-            instance.profile = instance.vkData;
-        }
-
-        // To prevent mistakes:
-        delete instance.localData;
-        delete instance.dataValues.localData;
-        delete instance.vkData;
-        delete instance.dataValues.vkData;
+// todo more automatically
+User.addHook('afterFind', async (findResult) => {
+  // eslint-disable-next-line no-param-reassign
+  if (!Array.isArray(findResult)) findResult = [findResult];
+  findResult.forEach((instance) => {
+    if (instance != null) {
+      if (instance.profileType === 'localData' && instance.localData !== undefined) {
+        // eslint-disable-next-line no-param-reassign
+        instance.profile = instance.localData;
+      } else if (instance.profileType === 'vkData' && instance.vkData !== undefined) {
+        // eslint-disable-next-line no-param-reassign
+        instance.profile = instance.vkData;
+      }
     }
-})
 
+    // To prevent mistakes:
+    // eslint-disable-next-line no-param-reassign
+    delete instance.localData;
+    // eslint-disable-next-line no-param-reassign
+    delete instance.dataValues.localData;
+    // eslint-disable-next-line no-param-reassign
+    delete instance.vkData;
+    // eslint-disable-next-line no-param-reassign
+    delete instance.dataValues.vkData;
+  });
+});
 
+User.belongsToMany(Robot, { through: 'userToRobot' });
+Robot.belongsToMany(User, { through: 'userToRobot' });
 
-User.belongsToMany(Robot,{through:"userToRobot"});
-Robot.belongsToMany(User,{through:"userToRobot"});
-
-User.prototype.getJSON = async function (){
-        let returnData = this.toJSON();
-        returnData.robots = await this.getRobot().then((robots)=>{
-            return robots.map((robot)=>{
-                return robot.toJSON();
-            })
-        })
-    return returnData;
-}
+User.prototype.getJSON = async function getJSON() { // todo check or remove this method
+  const returnData = this.toJSON();
+  returnData.robots = await this.getRobot().then((robots) => robots.map((robot) => robot.toJSON()));
+  return returnData;
+};
 
 // User.prototype.getProfileData = async function(userId){
 //     try{

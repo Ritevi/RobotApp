@@ -8,6 +8,7 @@
 // {
 //     // let user = await Auth.register("herhersome","herher@gmail.com","herher");
 //     // let pairOfTokens = await Auth.login({username:"herhersome",password:"herher"});
+// eslint-disable-next-line max-len
 //     // let anotherPair = await Auth.refreshAccessToken({refreshToken:pairOfTokens.refreshToken,accessToken:pairOfTokens.accessToken})
 //     // return [pairOfTokens,anotherPair];
 //
