@@ -66,7 +66,7 @@
      
 
 ### ROBOT
-#### robot/ POST
+#### robot/robot POST
         
 * Добавить робота к пользователю
         
