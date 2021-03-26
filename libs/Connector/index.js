@@ -1,5 +1,5 @@
 const wsServer = require('ws').Server;
-const { AuthService } = require('../Auth');
+const { } = require('../Auth');
 
 // u need to close the connection after change the robot
 class ConnectorWS extends wsServer {
@@ -77,6 +77,7 @@ class ConnectorWS extends wsServer {
     });
   }
 
+  // todo: check this validation of robot Socket
   onCmd(userId, cmd) {
     if (cmd) {
       const robotUuid = this.userToRobot.get(userId);

@@ -26,14 +26,15 @@ const tokenSchema = joi.object({
  think about get pair of access and refresh token in redis to verify,
   that this access token belongs to some refresh token
 */
-class RefreshSession {
-  constructor(storage, subscriber, sessionMaxCount = 5) {
-    this.storage = storage;
-    this.subscriber = subscriber;
-    this.collectionName = 'refreshSession';
-    this.collectionTtlTokens = 'ttlTokens';
-    this.sessionMaxCount = sessionMaxCount;
 
+class RefreshStorage {
+  constructor({ RedisClient, RedisSub }) {
+    this.storage = RedisClient;
+    this.subscriber = RedisSub;
+    this.collectionName = 'RefreshStorage';
+    this.collectionTtlTokens = 'ttlTokens';
+    this.sessionMaxCount = 5;
+    this.refreshTokenExpiresInMinutes = 60 * 24 * 3;
     // redis-cli: config set notify-keyspace-events KEx
     this.subscriber.psubscribeAsync('__keyevent*__:expired');
     this.subscriber.on('pmessage', this.subscribeCb);
@@ -49,7 +50,7 @@ class RefreshSession {
     const ttlTokenPath = await this.getTtlTokenPath(refreshSession.userId);
 
     const tokensCount = await this.storage.zcardAsync(ttlTokenPath);
-    if (tokensCount >= this.sessionMaxCount) await this.removeOldToken(refreshSession.userId);
+    if (tokensCount >= this.sessionMaxCount) await this.removeOldestToken(refreshSession.userId);
 
     await this.storage.zaddAsync(ttlTokenPath,
       refreshSession.createdAt,
@@ -121,6 +122,7 @@ class RefreshSession {
     return this.collectionTtlTokens + this.storage.separator + userId;
   }
 
+  // todo think about checking the token lifetime
   // dont need check expire, because key will be deleted after time expired
   async verifyToken(refreshSession) {
     const refreshValidated = await tokenSchema.validateAsync(refreshSession);
@@ -146,7 +148,7 @@ class RefreshSession {
     return true;
   }
 
-  async removeOldToken(userId) {
+  async removeOldestToken(userId) {
     await joi.number().required().validateAsync(userId);
 
     const ttlTokenPath = await this.getTtlTokenPath(userId);
@@ -157,13 +159,29 @@ class RefreshSession {
     return this.storage.delAsync(tokensPath);
   }
 
-    subscribeCb = (pattern, key, refreshPath) => {
-      const [DbName, userId, token] = refreshPath.split(':');
-      if (DbName === this.collectionName) {
-        const ttlTokenPath = this.getTtlTokenPath(userId);
-        this.storage.zremAsync(ttlTokenPath, token);
-      }
+  async refreshToken(options) {
+    const {
+      refreshToken, ua, fingerprint, userId,
+    } = options;
+    const verify = await this.verifyToken({
+      refreshToken, ua, fingerprint, userId,
+    });
+    if (!verify) throw new Error('verify error : refresh token');
+    return this.createToken({
+      userId,
+      fingerprint,
+      ua,
+      expiresIn: Math.floor(Date.now() / 1000) + this.refreshTokenExpiresInMinutes * 60,
+    });
+  }
+
+  subscribeCb = (pattern, key, refreshPath) => {
+    const [DbName, userId, token] = refreshPath.split(':');
+    if (DbName === this.collectionName) {
+      const ttlTokenPath = this.getTtlTokenPath(userId);
+      this.storage.zremAsync(ttlTokenPath, token);
     }
+  }
 }
 
-module.exports = RefreshSession;
+module.exports = RefreshStorage;

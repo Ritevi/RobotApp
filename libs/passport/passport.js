@@ -14,6 +14,7 @@ passport.use('vk-oauth2', new OAuth2Strategy({
   axios.post(`https://api.vk.com/method/users.get?user_id=${params.user_id}&v=5.52&access_token=${accessToken}`)
     .then((res) => res.data.response[0])
     .then(async (prof) => {
+      // todo move this to AuthService
       const [user] = await User.findOrCreate({
         where: {
         },

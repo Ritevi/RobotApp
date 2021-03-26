@@ -1,6 +1,7 @@
 const { Robot } = require('../../models/Robot');
 const { User } = require('../../models/User');
 
+// how i will know that this is the owner of the robot
 class RobotService {
   static async addRobotToUser(userId, robotUuid) {
     const user = await User.findByPk(userId);
@@ -11,7 +12,7 @@ class RobotService {
     });
     if (!robot) throw new Error('no robot');
     await user.addRobot(robot.id);
-    return user.getJSON();
+    return { id: robot.id };
   }
 
   static async userHasRobot(userId, robotUuid) {
@@ -23,7 +24,7 @@ class RobotService {
     return robot.hasUser(userId);
   }
 
-  static async getRobots(userId): Promise<Array> {
+  static async getRobots(userId) {
     const user = await User.findByPk(userId);
     const robots = await user.getRobot().then((robotMap) => robotMap.map((robot) => ({
       id: robot.id,

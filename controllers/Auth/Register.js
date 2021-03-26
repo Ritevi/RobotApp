@@ -1,6 +1,4 @@
-const { AuthService } = require('../../libs/Auth');
-
-module.exports = async (req, res, next) => {
+module.exports = (AuthService) => async (req, res, next) => {
   try {
     const user = await AuthService.register(req.body);
     res.json(user);

@@ -2,6 +2,10 @@ const { promisify } = require('util');
 const index = require('redis');
 
 class RedisClient extends index.RedisClient {
+  constructor({ RedisConfig }) {
+    super(RedisConfig);
+  }
+
     separator = ':';
 
     getAsync = promisify(this.get);

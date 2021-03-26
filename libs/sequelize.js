@@ -5,10 +5,16 @@ const seqParams = config.get('sequelize');
 
 const sequelize = new Sequelize(
   seqParams.database,
-  process.env.USER,
-  process.env.PASSWORD,
+  seqParams.user,
+  seqParams.password,
   seqParams,
 );
 
-sequelize.sync({ alter: true });
+if (process.env.ENV === 'test') {
+  sequelize.sync({ force: true });
+}
+if (process.env.ENV === 'dev') {
+  sequelize.sync({ alter: true });
+}
+
 module.exports = sequelize;

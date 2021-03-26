@@ -8,6 +8,9 @@ const uppercaseFirst = (str) => `${str[0].toUpperCase()}${str.substr(1)}`;
 
 class User extends Sequelize.Model {}
 
+// todo hooks:true is not fast and good.
+// However, adding hooks: true explicitly tells Sequelize that optimization is not of your concern.
+
 User.init(
   {
     id: {
@@ -40,9 +43,12 @@ vkData.hasOne(User, {
     profileType: 'vkData',
   },
   as: 'user',
+  hooks: true,
 });
 
-User.belongsTo(vkData, { foreignKey: 'profileId', constraints: false, as: 'vkData' });
+User.belongsTo(vkData, {
+  foreignKey: 'profileId', constraints: false, as: 'vkData', hooks: true,
+});
 
 localData.hasOne(User, {
   foreignKey: 'profileId',
@@ -51,9 +57,13 @@ localData.hasOne(User, {
     profileType: 'localData',
   },
   as: 'user',
+  hooks: true,
+
 });
 
-User.belongsTo(localData, { foreignKey: 'profileId', constraints: false, as: 'localData' });
+User.belongsTo(localData, {
+  foreignKey: 'profileId', constraints: false, as: 'localData', hooks: true,
+});
 
 // todo more automatically
 User.addHook('afterFind', async (findResult) => {

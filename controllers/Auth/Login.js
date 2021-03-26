@@ -1,6 +1,5 @@
-const { AuthService } = require('../../libs/Auth');
-
-module.exports = async (req, res, next) => {
+// todo: DI move AuthService out to app,
+module.exports = (AuthService) => async (req, res, next) => {
   try {
     const ua = req.headers['user-agent'];
     const { fingerprint } = req.body;

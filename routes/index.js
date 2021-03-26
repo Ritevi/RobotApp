@@ -1,17 +1,9 @@
-const express = require('express');
+const Auth = require('./Auth');
+const Debug = require('./Debug');
+const Robot = require('./Robot');
+const VkAuth = require('./vkAuth');
 
-const router = express.Router();
-const { passport } = require('../libs/passport');
-const vkAuth = require('../controllers/Auth/vkAuth');
-
-router.get('/', (req, res) => {
-  res.render('index');
-});
-
-router.get('/auth/example', (req, res, next) => {
-  passport.authenticate('vk-oauth2', { state: `${req.query.fingerprint}.ua.${req.headers['user-agent']}` })(req, res, next);
-});
-
-router.get('/auth/example/callback',
-  passport.authenticate('vk-oauth2', { session: false }), vkAuth);
-module.exports = router;
+exports.Auth = Auth;
+exports.Debug = Debug;
+exports.Robot = Robot;
+exports.VkAuth = VkAuth;

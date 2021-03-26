@@ -4,11 +4,11 @@ module.exports = async (req, res, next) => {
   try {
     const { userId } = req.body.userData;
     const { robotId } = req.body;
-    await RobotService.addRobotToUser(userId, robotId);
+    const robot = await RobotService.addRobotToUser(userId, robotId); // todo why dont return value
     res.json({
       message: {
         userId,
-        robotId,
+        robotId: robot.id,
       },
     });
   } catch (err) {
