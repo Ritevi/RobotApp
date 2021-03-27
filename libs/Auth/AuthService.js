@@ -76,7 +76,9 @@ class AuthService {
         accessToken,
         { ignoreExpiration: true },
       );
+
       if (!complete) throw new Error('verify error : access token');
+
       userId = complete.userId;
       if (Date.now() <= complete.exp * 1000) await this.accessStorage.addToBlackList(accessToken);
       const verify = await this.refreshStorage.verifyToken({

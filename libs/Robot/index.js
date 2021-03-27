@@ -1,5 +1,6 @@
 const { Robot } = require('../../models/Robot');
 const { User } = require('../../models/User');
+const RobotError = require('./RobotError');
 
 // how i will know that this is the owner of the robot
 class RobotService {
@@ -12,23 +13,21 @@ class RobotService {
     });
     if (!robot) throw new Error('no robot');
     await user.addRobot(robot.id);
-    return { id: robot.id };
+    if (await user.hasRobot(robot.id)) {
+      return { id: robot };
+    }
+    throw new RobotError('ROBOT', 'ROBOTADD', 'robot not add');
   }
 
   static async userHasRobot(userId, robotUuid) {
-    const robot = await Robot.findAll({
-      where: {
-        uuid: robotUuid,
-      },
-    });
-    return robot.hasUser(userId);
+    const user = await User.findByPk(userId);
+    return user.hasRobot(robotUuid);
   }
 
   static async getRobots(userId) {
     const user = await User.findByPk(userId);
     const robots = await user.getRobot().then((robotMap) => robotMap.map((robot) => ({
       id: robot.id,
-      uuid: robot.uuid,
     })));
     return robots;
   }
@@ -41,8 +40,12 @@ class RobotService {
       },
     });
     await user.removeRobot(robot);
-    const robots = await this.getRobots(userId);
-    return robots;
+    if (!await this.userHasRobot(userId, robotUuid)) {
+      return {
+        robotId: robotUuid,
+      };
+    }
+    throw new RobotError('ROBOT', 'ROBOTREMOVE', 'robot still exist');
   }
 }
 

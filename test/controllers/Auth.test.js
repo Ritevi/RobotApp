@@ -1,20 +1,20 @@
 /* eslint-env mocha */
 const request = require('supertest');
 const { expect } = require('chai');
+const faker = require('faker');
 const App = require('../../app');
 
 let expressApp;
+let user;
 
 describe('Auth module', () => {
-  before(() => {
+  before(function (done) {
     const app = new App();
     expressApp = request(app.getExpress());
+    this.timeout(1500);
+    setTimeout(done, 900);
   });
   // so much time to connect to DB
-  beforeEach(function (done) {
-    this.timeout(1100);
-    setTimeout(done, 600);
-  });
 
   let currentResponse = null;
 
@@ -29,8 +29,8 @@ describe('Auth module', () => {
   });
   describe('POST /Auth/Register', () => {
     it('register classic user', (done) => {
-      const user = {
-        username: 'ritevi2',
+      user = {
+        username: faker.internet.userName(),
         password: 'herher',
       };
 
@@ -53,8 +53,8 @@ describe('Auth module', () => {
       setTimeout(done, 900);
     });
     it('login classic user', (done) => {
-      const user = {
-        username: 'ritevi2',
+      const LogUser = {
+        username: user.username,
         password: 'herher',
         fingerprint: '123',
       };
@@ -62,7 +62,7 @@ describe('Auth module', () => {
       expressApp
         .post('/Auth/Login')
         .set('user-agent', 'PostmanRuntime/7.26.8')
-        .send(user)
+        .send(LogUser)
         .expect(200)
         .end((err, res) => {
           currentResponse = res;
@@ -76,16 +76,16 @@ describe('Auth module', () => {
     });
 
     it('login wrong password', (done) => {
-      const user = {
-        username: 'ritevi2',
-        password: 'asdfas',
+      const LogUser = {
+        username: user.username,
+        password: 'wrong',
         fingerprint: '123',
       };
 
       expressApp
         .post('/Auth/Login')
         .set('user-agent', 'PostmanRuntime/7.26.8')
-        .send(user)
+        .send(LogUser)
         .expect(400)
         .end((err, res) => {
           currentResponse = res;
@@ -96,15 +96,15 @@ describe('Auth module', () => {
         });
     });
 
-    it('login validation check ', (done) => {
-      const user = {
-        username: 'ritevi2',
+    it('login validation check without fingerprint', (done) => {
+      const LogUser = {
+        username: user.username,
         password: 'herher',
       };
 
       expressApp
         .post('/Auth/Login')
-        .send(user)
+        .send(LogUser)
         .end((err, res) => {
           currentResponse = res;
           expect(res.status).to.be.within(400, 500, 'no error status');
@@ -122,7 +122,7 @@ describe('Auth module', () => {
     });
     it('refresh previous token', (done) => {
       const loginUser = {
-        username: 'ritevi2',
+        username: user.username,
         password: 'herher',
         fingerprint: '123',
       };
@@ -145,7 +145,7 @@ describe('Auth module', () => {
           expressApp
             .post('/Auth/refresh')
             .set('user-agent', 'PostmanRuntime/7.26.8')
-            .set('authorization', res.body.tokens.accessToken)
+            .set('authorization', `Bearer ${res.body.tokens.accessToken}`)
             .send(body)
             .expect(200)
             .end((refreshErr, refreshRes) => {

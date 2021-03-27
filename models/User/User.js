@@ -92,12 +92,13 @@ User.addHook('afterFind', async (findResult) => {
   });
 });
 
-User.belongsToMany(Robot, { through: 'userToRobot' });
-Robot.belongsToMany(User, { through: 'userToRobot' });
+User.belongsToMany(Robot, { through: 'userToRobot', as: { singular: 'Robot', plural: 'Robot' } });
+Robot.belongsToMany(User, { through: 'userToRobot', as: { singular: 'User', plural: 'User' } });
 
 User.prototype.getJSON = async function getJSON() { // todo check or remove this method
   const returnData = this.toJSON();
-  returnData.robots = await this.getRobot().then((robots) => robots.map((robot) => robot.toJSON()));
+  const robots = await this.getRobot();
+  returnData.robots = robots.map((robot) => robot.toJSON());
   return returnData;
 };
 
