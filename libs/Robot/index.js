@@ -14,7 +14,7 @@ class RobotService {
     if (!robot) throw new Error('no robot');
     await user.addRobot(robot.id);
     if (await user.hasRobot(robot.id)) {
-      return { id: robot };
+      return { id: robot.id };
     }
     throw new RobotError('ROBOT', 'ROBOTADD', 'robot not add');
   }
