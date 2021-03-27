@@ -1,17 +1,18 @@
 const wsServer = require('ws').Server;
-const { } = require('../Auth');
 
 // u need to close the connection after change the robot
 class ConnectorWS extends wsServer {
-  constructor(options) {
-    super(options);
+  constructor({ wsOptions, AccessStorage }) {
+    super(wsOptions);
     this.userMap = new Map();
     this.robotMap = new Map();
     this.userToRobot = new Map();
     this.robotToUser = new Map();
+    this.AccessStorage = AccessStorage;
+    this.on('listening', this.onListening);
+
     this.on('connection', this.onConnection);
     this.on('error', this.onError);
-
     this.on('userAdd', this.onUserAdd);
     this.on('robotAdd', this.onRobotAdd);
 
@@ -19,6 +20,10 @@ class ConnectorWS extends wsServer {
     this.on('changeRobot', this.onChangeRobot);
 
     this.on('info', this.onInfo);
+  }
+
+  onListening() {
+    console.log(`WebSocket running on ${this.address().address}`);
   }
 
   onConnection(socket) {
@@ -121,7 +126,7 @@ class ConnectorWS extends wsServer {
         // eslint-disable-next-line no-param-reassign
         socket.id = uuid;
         this.robotMap.set(uuid, socket);
-        socket.on('close', this.onCloseSocket.bind(this, socket));
+        socket.on('close', this.onCloseRobotSocket.bind(this, socket));
         this.emit('robotAdd', uuid, socket);
       }
     } catch (err) {
@@ -138,27 +143,46 @@ class ConnectorWS extends wsServer {
     try {
       const token = msg.toString();
       if (!token) this.emit('error', new Error('no token'));
-      AuthService.verifyAccessToken(token).then((userData) => {
+      this.AccessStorage.verifyToken(token).then((userData) => {
         const { userId } = userData;
         // todo fix id in socket
         // eslint-disable-next-line no-param-reassign
         socket.id = userId;
         this.userMap.set(userData.userId, socket);
-        socket.on('close', this.onCloseSocket.bind(this, socket));
+        socket.on('close', this.onCloseUserSocket.bind(this, socket));
         this.emit('userAdd', userId, socket);
       }).catch((err) => err);
     } catch (err) {
       this.emit('error', err);
-      socket.send({ type: 'authUserError', body: err.toString() });
+      socket.send(JSON.stringify({ type: 'authUserError', body: err.toString() }));
       socket.destroy();
     }
   }
 
-  onCloseSocket(socket) { // todo add close check with sending ping to client
+  onCloseRobotSocket(socket) { // todo add close check with sending ping to client
     console.log(`uuid ${socket.id}`);
-    console.log(`id ${socket.id}`);
-    this.userMap.delete(socket.id);
+    const userId = this.robotToUser.get(socket.id);
+    const userSocket = this.userMap.get(userId);
+    this.sendCloseInfo(userSocket, socket.id);
     this.robotMap.delete(socket.id);
+  }
+
+  onCloseUserSocket(socket) { // todo add close check with sending ping to client
+    console.log(`id ${socket.id}`);
+    const robotId = this.userToRobot.get(socket.id);
+    const robotSocket = this.robotMap.get(robotId);
+    this.sendCloseInfo(robotSocket, socket.id);
+    this.userMap.delete(socket.id);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  sendCloseInfo(infoSocket, socketId) {
+    infoSocket.send(JSON.stringify({
+      type: 'closeConnection',
+      body: {
+        socketId,
+      },
+    }));
   }
 
   // eslint-disable-next-line class-methods-use-this
