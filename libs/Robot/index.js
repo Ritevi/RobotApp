@@ -32,17 +32,17 @@ class RobotService {
     return robots;
   }
 
-  static async removeRobot(userId, robotUuid) {
+  static async removeRobot(userId, robotId) {
     const user = await User.findByPk(userId);
     const robot = await Robot.findAll({
       where: {
-        uuid: robotUuid,
+        id: robotId,
       },
     });
     await user.removeRobot(robot);
-    if (!await this.userHasRobot(userId, robotUuid)) {
+    if (!await this.userHasRobot(userId, robotId)) {
       return {
-        robotId: robotUuid,
+        robotId: Number(robotId),
       };
     }
     throw new RobotError('ROBOT', 'ROBOTREMOVE', 'robot still exist');
