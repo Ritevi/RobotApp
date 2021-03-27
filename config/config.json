@@ -6,17 +6,17 @@
   "jwtsecret": "hi,her",
   "sequelize": {
     "dialect": "postgres",
-    "host": "172.17.0.3",
+    "host": "10.10.0.3",
     "database": "userdb",
     "charset": "utf8",
     "user": "postgres",
     "password": "postgres"
   },
   "redis": {
-    "host": "172.17.0.2"
+    "host": "10.10.0.2"
   },
   "webSocket": {
-    "host": "37.77.104.201",
+    "host": "127.0.0.1",
     "port": "1337"
   }
 }
