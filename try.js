@@ -8,6 +8,7 @@
 // {
 //     // let user = await Auth.register("herhersome","herher@gmail.com","herher");
 //     // let pairOfTokens = await Auth.login({username:"herhersome",password:"herher"});
+// eslint-disable-next-line max-len
 //     // let anotherPair = await Auth.refreshAccessToken({refreshToken:pairOfTokens.refreshToken,accessToken:pairOfTokens.accessToken})
 //     // return [pairOfTokens,anotherPair];
 //
@@ -80,3 +81,8 @@
 // });
 //
 //
+
+const WsSocket = require('ws');
+
+const socket = new WsSocket('ws://127.0.0.1:1337');
+socket.on('error', console.log);

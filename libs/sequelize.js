@@ -1,12 +1,20 @@
-let config = require("../config");
-let Sequelize = require("sequelize");
-const seqParams = config.get("sequelize");
+const Sequelize = require('sequelize');
+const config = require('../config');
 
-let sequelize = new Sequelize(
+const seqParams = config.get('sequelize');
+
+const sequelize = new Sequelize(
   seqParams.database,
-  process.env.USER,
-  process.env.PASSWORD,
-  seqParams
+  seqParams.user,
+  seqParams.password,
+  seqParams,
 );
+
+if (process.env.ENV === 'test') {
+  sequelize.sync({ force: true });
+}
+if (process.env.ENV === 'dev') {
+  sequelize.sync({ alter: true });
+}
 
 module.exports = sequelize;

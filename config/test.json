@@ -7,10 +7,11 @@
   "sequelize": {
     "dialect": "postgres",
     "host": "10.10.0.3",
-    "database": "userdb",
+    "database": "testdb",
     "charset": "utf8",
     "user": "postgres",
-    "password": "postgres"
+    "password": "postgres",
+    "logging": false
   },
   "redis": {
     "host": "10.10.0.2"

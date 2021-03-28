@@ -1,43 +1,54 @@
 const express = require('express');
-const path = require('path');
-const cookieParser = require('cookie-parser');
 const logger = require('morgan');
-let passport = require('./libs/passport');
+const { passport } = require('./libs/passport');
+const {
+  Auth, VkAuth, Robot, Debug,
+} = require('./routes');
+const ErrorHandler = require('./middlewares/ErrorHandler');
+const NotFound = require('./middlewares/NotFount');
 
-var indexRouter = require('./routes/index');
+class Server {
+  constructor() {
+    this.app = express();
+    this.setup();
+  }
 
-const authMiddleware = require('./middlewares/Auth');
-const authRouter = require('./routes/Auth');
-const robotRouter = require('./routes/Robot');
-const debugRouter = require('./routes/Debug');
+  setup() {
+    if (process.env.ENV !== 'test') {
+      this.app.use(logger(process.env.ENV));
+    }
 
-const app = express();
+    this.app.use(express.json());
+    this.app.use(express.urlencoded({ extended: false }));
 
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+    this.app.use(passport.initialize());
 
-app.use(passport.initialize());
+    this.app.use('/', VkAuth);
+    this.app.use('/auth', Auth);
+    this.app.use('/robot', Robot);
+    this.app.use('/debug', Debug);
 
-app.use('/', indexRouter);
-app.use('/auth', authRouter);
-app.use('/robot',authMiddleware,robotRouter);
-app.use('/debug',debugRouter);
+    this.app.use(ErrorHandler);
+    this.app.use(NotFound);
+  }
 
+  run(port) {
+    this.server = this.app.listen(port, () => {
+      console.log(`server running on port ${port}`);
+    });
+  }
 
-app.use(function (err, req, res, next) {
-    // set locals, only providing error in development
-    console.log(err);
-    res.status(err.status || 500);
-    res.json({message:"error",error:err.toString()});
+  set(settings, value) {
+    this.app.set(settings, value);
+  }
 
-});
+  stop(done) {
+    this.server.close(done);
+  }
 
-app.use((req,res)=>{
-    res.status(404);
-    res.json({message:"no route"});
-})
+  getExpress() {
+    return this.app;
+  }
+}
 
-module.exports = app;
+module.exports = Server;

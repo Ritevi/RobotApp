@@ -1,4 +1,4 @@
-class AuthError extends Error {
+class RobotError extends Error {
   constructor(name, code, message, status) {
     super(name + code);
     this.name = name;
@@ -13,4 +13,4 @@ class AuthError extends Error {
     return rest;
   }
 }
-module.exports = AuthError;
+module.exports = RobotError;

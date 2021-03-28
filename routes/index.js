@@ -1,20 +1,9 @@
-var express = require('express');
-var router = express.Router();
-var passport = require('../libs/passport');
+const Auth = require('./Auth');
+const Debug = require('./Debug');
+const Robot = require('./Robot');
+const VkAuth = require('./vkAuth');
 
-
-router.get("/",(res,req)=>{
-    res.render('index');
-})
-
-/* GET home page. */
-router.get('/auth/example',
-    passport.authenticate('vk-oauth2'));
-
-router.get('/auth/example/callback',
-    passport.authenticate('vk-oauth2', { failureRedirect: '/login',session:false,successRedirect:"/" }),
-    function(req, res) {
-      // Successful authentication, redirect home.
-      res.redirect('/');
-    });
-module.exports = router;
+exports.Auth = Auth;
+exports.Debug = Debug;
+exports.Robot = Robot;
+exports.VkAuth = VkAuth;
