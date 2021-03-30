@@ -48,6 +48,8 @@ jspm_packages/
 typings/
 
 .idea/
+config/
+
 
 # TypeScript cache
 *.tsbuildinfo
