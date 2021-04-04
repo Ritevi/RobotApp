@@ -2,6 +2,7 @@ const awilix = require('awilix');
 const { AccessStorage, AuthService, RefreshStorage } = require('./libs/Auth');
 const { User, localData, vkData } = require('./models/User');
 const RedisClient = require('./libs/redis');
+const EmailService = require('./libs/Email');
 const config = require('./config');
 
 const container = awilix.createContainer({
@@ -18,6 +19,7 @@ container.register({
   RedisClient: awilix.asClass(RedisClient),
   RedisSub: awilix.asClass(RedisClient),
   RedisConfig: awilix.asValue(config.get('redis')),
+  EmailService: awilix.asClass(EmailService).singleton(),
 });
 
 module.exports = {
