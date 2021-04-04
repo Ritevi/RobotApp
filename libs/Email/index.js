@@ -40,14 +40,14 @@ class mail {
 
   // eslint-disable-next-line class-methods-use-this
   async getLink(UUID) {
-    const link = `http:${config.get('host')}:${config.get('port')}/activateProfile/${UUID}`;
+    const link = `http:${config.get('host')}:${config.get('port')}/auth/activateProfile/${UUID}`;
     return link;
   }
 
   async registerEmail(email, UUID) {
-    const link = this.getLink(UUID);
+    const link = await this.getLink(UUID);
     const text = `Confirm your email address if you have registered\n${link}`;
-    return this.sendEmail(email, text, `<h1>${text}</h1>`);
+    return this.sendEmail(email, text, `<h1><a>${text}</a></h1>`);
   }
 }
 
