@@ -26,8 +26,13 @@ class AuthService {
         as: 'localData',
       }],
     });
-    const profile = await user.getProfile();
-    await this.emailService.registerEmail(email, profile.emailUUID);
+    try {
+      const profile = await user.getProfile();
+      await this.emailService.registerEmail(email, profile.emailUUID);
+    } catch (err) {
+      await user.destroy();
+      throw new AuthError('AUTH', 'REGISTER', 'email was not sent', 400);
+    }
     return {
       userId: user.id,
     };
@@ -46,6 +51,10 @@ class AuthService {
     if (!localData) {
       throw new AuthError('AUTH', 'LOGIN', 'user not found', 400); // todo code,status
     }
+    if (!localData.activeProfile) {
+      throw new AuthError('AUTH', 'LOGIN', 'user not active', 400);
+    }
+
     if (!await localData.verifyPassword(password)) {
       throw new AuthError('AUTH', 'LOGIN', 'the password is incorrect', 400); // todo code,status
     } else {
@@ -102,14 +111,14 @@ class AuthService {
         { ignoreExpiration: true },
       );
 
-      if (!complete) throw new Error('verify error : access token');
+      if (!complete) throw new AuthError('AUTH', 'REFRESH', 'verify error : access token', 400);
 
       userId = complete.userId;
       if (Date.now() <= complete.exp * 1000) await this.accessStorage.addToBlackList(accessToken);
       const verify = await this.refreshStorage.verifyToken({
         userId, fingerprint, ua, refreshToken,
       });
-      if (!verify) throw new Error('verify error : refresh token');
+      if (!verify) throw new AuthError('AUTH', 'REFRESH', 'verify error : refresh token', 400);
       const newRefreshToken = await this.refreshStorage.createToken({
         userId,
         fingerprint,
