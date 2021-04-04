@@ -11,6 +11,19 @@ localData.init(
       type: Sequelize.INTEGER,
       autoIncrement: true,
     },
+    activeProfile: {
+      type: Sequelize.BOOLEAN,
+    },
+    email: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      unique: true,
+    },
+    emailUUID: {
+      type: Sequelize.UUIDV4,
+      allowNull: false,
+      unique: true,
+    },
     username: {
       type: Sequelize.STRING,
       allowNull: false,
