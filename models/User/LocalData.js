@@ -21,7 +21,8 @@ localData.init(
       unique: true,
     },
     emailUUID: {
-      type: Sequelize.UUIDV4,
+      type: Sequelize.UUID,
+      defaultValue: Sequelize.UUIDV4,
       allowNull: false,
       unique: true,
     },
