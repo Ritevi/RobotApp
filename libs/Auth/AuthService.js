@@ -2,12 +2,13 @@ const AuthError = require('./AuthError');
 // todo access token to refresh token;
 class AuthService {
   constructor({
-    RefreshStorage, AccessStorage, UserStorage, LocalStorage,
+    RefreshStorage, AccessStorage, UserStorage, LocalStorage, EmailService,
   }) {
     this.refreshStorage = RefreshStorage;
     this.accessStorage = AccessStorage;
     this.userStorage = UserStorage;
     this.localData = LocalStorage;
+    this.emailService = EmailService;
   }
 
   async register(options) {
@@ -25,6 +26,8 @@ class AuthService {
         as: 'localData',
       }],
     });
+    const profile = await user.getProfile();
+    await this.emailService.registerEmail(email, profile.emailUUID);
     return {
       userId: user.id,
     };
