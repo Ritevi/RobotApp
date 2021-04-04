@@ -20,7 +20,7 @@ class mail {
     });
   }
 
-  async sendEmail(email, text, html = '<h1>Hi ksta</h1>', subject = 'RobotApp') {
+  async sendEmail(email, text, html, subject = 'RobotApp') {
     return new Promise((resolve, reject) => {
       this.transporter.sendMail({
         from: 'sanekv1999@gmail.com', // sender address
@@ -36,6 +36,18 @@ class mail {
         }
       });
     });
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  async getLink(UUID) {
+    const link = `http:${config.get('host')}:${config.get('port')}/activateProfile/${UUID}`;
+    return link;
+  }
+
+  async registerEmail(email, UUID) {
+    const link = this.getLink(UUID);
+    const text = `Confirm your email address if you have registered\n${link}`;
+    return this.sendEmail(email, text, `<h1>${text}</h1>`);
   }
 }
 
