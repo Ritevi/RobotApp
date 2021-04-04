@@ -11,12 +11,13 @@ class AuthService {
   }
 
   async register(options) {
-    const { username, password } = options;
+    const { username, password, email } = options;
     const user = await this.userStorage.create({
       profileType: 'localData',
       localData: {
         password: await this.localData.hashPassword(password),
         username,
+        email,
       },
     }, {
       include: [{
@@ -50,6 +51,27 @@ class AuthService {
       };
       return this.generatePairOftokens({ userData, fingerprint, ua });
     }
+  }
+
+  async activateLocalProfile(options) {
+    const { emailUUID } = options;
+    const localData = await this.localData.findOne({
+      where: {
+        emailUUID,
+      },
+    });
+    if (!localData) {
+      throw new AuthError('AUTH', 'ACTIVATE', 'user not found', 400); // todo code,status
+    }
+    try {
+      await localData.set('activeProfile', true);
+      await localData.save();
+    } catch (err) {
+      throw new AuthError('AUTH', 'ACTIVATE', 'save error', 400);
+    }
+    return {
+      active: true,
+    };
   }
 
   // options: { userdata, fingerprint, ua}
