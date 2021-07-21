@@ -6,11 +6,9 @@ module.exports = (AccessStorage) => async (req, res, next) => {
       req.body.userData = await AccessStorage.decodeToken(token);
       next();
     } else {
-      res.json({ message: 'please login' }); // todo change
+      res.json({ message: 'please login' });
     }
   } catch (err) {
-    console.log(err);
-    // todo check type of error like TokenExpiredError and others, add return message
     res.status(400).json({ message: 'token error', err });
   }
 };

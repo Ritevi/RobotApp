@@ -1,4 +1,3 @@
-// todo: DI move AuthService out to app,
 module.exports = (AuthService) => async (req, res, next) => {
   try {
     const ua = req.headers['user-agent'];

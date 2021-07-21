@@ -1,5 +1,4 @@
 const AuthError = require('./AuthError');
-// todo access token to refresh token;
 class AuthService {
   constructor({
     RefreshStorage, AccessStorage, UserStorage, LocalStorage, EmailService,
@@ -49,14 +48,14 @@ class AuthService {
       },
     });
     if (!localData) {
-      throw new AuthError('AUTH', 'LOGIN', 'user not found', 400); // todo code,status
+      throw new AuthError('AUTH', 'LOGIN', 'user not found', 400);
     }
     if (!localData.activeProfile) {
       throw new AuthError('AUTH', 'LOGIN', 'user not active', 400);
     }
 
     if (!await localData.verifyPassword(password)) {
-      throw new AuthError('AUTH', 'LOGIN', 'the password is incorrect', 400); // todo code,status
+      throw new AuthError('AUTH', 'LOGIN', 'the password is incorrect', 400);
     } else {
       const userData = {
         userId: (await localData.getUser()).id,
@@ -73,7 +72,7 @@ class AuthService {
       },
     });
     if (!localData) {
-      throw new AuthError('AUTH', 'ACTIVATE', 'user not found', 400); // todo code,status
+      throw new AuthError('AUTH', 'ACTIVATE', 'user not found', 400);
     }
     try {
       await localData.set('activeProfile', true);
@@ -92,7 +91,6 @@ class AuthService {
       userId: options.userData.userId,
       expiresIn: Math.floor(Date.now() / 1000)
         + this.refreshStorage.refreshTokenExpiresInMinutes * 60,
-      // todo remove string above, its already in class
       fingerprint: options.fingerprint,
       ua: options.ua,
     });
@@ -128,7 +126,6 @@ class AuthService {
       });
 
       const user = await this.userStorage.findByPk(userId);
-      // todo rewrite this with polymorphic association
       const userData = {
         userId: user.id,
       };

@@ -1,15 +1,10 @@
 const joi = require('joi');
 const uuidv4 = require('uuid').v4;
 
-// more test
-
-// mb delete joi on delete,get, ?
-
-// rewrite them 2
 const refreshSchema = joi.object({
   userId: [joi.number().required(), joi.string().required()],
   expiresIn: joi.date().timestamp('unix').raw().required(),
-  ua: joi.string().required().default(''), // todo check if this are checking
+  ua: joi.string().required().default(''),
   fingerprint: joi.string().required().default(''),
 });
 
@@ -35,7 +30,6 @@ class RefreshStorage {
     this.collectionTtlTokens = 'ttlTokens';
     this.sessionMaxCount = 5;
     this.refreshTokenExpiresInMinutes = 60 * 24 * 3;
-    // redis-cli: config set notify-keyspace-events KEx
     this.subscriber.psubscribeAsync('__keyevent*__:expired');
     this.subscriber.on('pmessage', this.subscribeCb);
   }
@@ -89,7 +83,7 @@ class RefreshStorage {
     const tokenDescriptionArr = [];
     await Promise.all(tokensArr.map(async (token) => {
       tokenDescriptionArr.push(await this.getTokenDescription(userId, token));
-    })); // todo check if this work, btw you dont need this
+    }));
     return tokenDescriptionArr;
   }
 
@@ -122,8 +116,6 @@ class RefreshStorage {
     return this.collectionTtlTokens + this.storage.separator + userId;
   }
 
-  // todo think about checking the token lifetime
-  // dont need check expire, because key will be deleted after time expired
   async verifyToken(refreshSession) {
     const refreshValidated = await tokenSchema.validateAsync(refreshSession);
 
@@ -139,12 +131,6 @@ class RefreshStorage {
         if (validatedToken[key] !== refreshValidated[key]) throw new Error('values are not equal');
       }
     }));
-
-    // for (const key in token) {
-    //   if (key === 'createdAt' || key === 'expiresIn') continue;
-    //   if (validatedToken[key] !== refreshValidated[key]) return false
-    //
-    // }
     return true;
   }
 

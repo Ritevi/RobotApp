@@ -82,7 +82,6 @@ class ConnectorWS extends wsServer {
     });
   }
 
-  // todo: check this validation of robot Socket
   onCmd(userId, cmd) {
     if (cmd) {
       const robotUuid = this.userToRobot.get(userId);
@@ -114,7 +113,7 @@ class ConnectorWS extends wsServer {
   }
 
   onChangeRobot(userId, uuid) {
-    this.userToRobot.set(userId, uuid); // todo verify that user can use this robot
+    this.userToRobot.set(userId, uuid);
     this.robotToUser.set(uuid, userId);
   }
 
@@ -122,7 +121,6 @@ class ConnectorWS extends wsServer {
     try {
       const uuid = msg.toString();
       if (this.verifyRobotId(uuid)) {
-        // todo fix eslint problem
         // eslint-disable-next-line no-param-reassign
         socket.id = uuid;
         this.robotMap.set(uuid, socket);
@@ -145,7 +143,6 @@ class ConnectorWS extends wsServer {
       if (!token) this.emit('error', new Error('no token'));
       this.AccessStorage.verifyToken(token).then((userData) => {
         const { userId } = userData;
-        // todo fix id in socket
         // eslint-disable-next-line no-param-reassign
         socket.id = userId;
         this.userMap.set(userData.userId, socket);
@@ -159,7 +156,7 @@ class ConnectorWS extends wsServer {
     }
   }
 
-  onCloseRobotSocket(socket) { // todo add close check with sending ping to client
+  onCloseRobotSocket(socket) {
     console.log(`uuid ${socket.id}`);
     const userId = this.robotToUser.get(socket.id);
     const userSocket = this.userMap.get(userId);
@@ -167,7 +164,7 @@ class ConnectorWS extends wsServer {
     this.robotMap.delete(socket.id);
   }
 
-  onCloseUserSocket(socket) { // todo add close check with sending ping to client
+  onCloseUserSocket(socket) {
     console.log(`id ${socket.id}`);
     const robotId = this.userToRobot.get(socket.id);
     const robotSocket = this.robotMap.get(robotId);

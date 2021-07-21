@@ -3,6 +3,7 @@ const config = require('../../config');
 
 class mail {
   constructor() {
+    this.userEmail = config.get('userEmail');
     this.transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
       port: 465,
@@ -10,7 +11,7 @@ class mail {
       service: 'gmail',
       auth: {
         type: 'OAuth2',
-        user: 'sanekv1999@gmail.com',
+        user: this.userEmail,
         clientId: config.get('ClientIdGmail'),
         clientSecret: config.get('ClientSecretGmail'),
         refreshToken: config.get('RefreshTokenGmail'),
@@ -23,11 +24,11 @@ class mail {
   async sendEmail(email, text, html, subject = 'RobotApp') {
     return new Promise((resolve, reject) => {
       this.transporter.sendMail({
-        from: 'sanekv1999@gmail.com', // sender address
-        to: email, // list of receivers
-        subject, // Subject line
-        text, // plain text body
-        html, // html body
+        from: this.userEmail,
+        to: email,
+        subject,
+        text,
+        html,
       }, (err, res) => {
         if (err) {
           reject(err);

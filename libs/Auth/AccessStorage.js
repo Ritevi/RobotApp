@@ -31,7 +31,7 @@ class AccessStorage {
     return !!this.storage.setAsync(this.BlackListAccess + this.storage.separator + token, true, 'EX', Math.floor(decodedToken.exp - Date.now() / 1000));
   }
 
-  async refreshToken(token, options = {}) { // todo need return userId from DB with access token
+  async refreshToken(token, options = {}) {
     const { ignoreExpiration } = options;
     const userData = await this.verifyToken(token, { ignoreExpiration });
     if (!userData) throw new Error('verify error : access token');

@@ -9,7 +9,6 @@ process.on('unhandledRejection', (reason) => {
 
 process.on('uncaughtException', (error) => {
   console.error(error);
-  // todo add error management
 });
 const server = new Server(config.port);
 const connector = new Connector({
@@ -20,6 +19,6 @@ const connector = new Connector({
 server.set('robotMap', connector.robotMap);
 server.set('userMap', connector.userMap);
 server.set('userToRobot', connector.userToRobot);
-server.set('robotToUser', connector.robotToUser); // todo change the way you access connector from app
+server.set('robotToUser', connector.robotToUser);
 
 server.run(config.get('port'));

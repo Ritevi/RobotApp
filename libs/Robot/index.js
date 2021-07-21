@@ -2,12 +2,11 @@ const { Robot } = require('../../models/Robot');
 const { User } = require('../../models/User');
 const RobotError = require('./RobotError');
 
-// how i will know that this is the owner of the robot
 class RobotService {
   static async addRobotToUser(userId, robotUuid) {
     const user = await User.findByPk(userId);
     const [robot] = await Robot.findOrCreate({
-      where: { // todo dont create
+      where: {
         uuid: robotUuid,
       },
     });
