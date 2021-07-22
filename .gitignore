@@ -47,7 +47,10 @@ jspm_packages/
 # TypeScript v1 declaration files
 typings/
 
-.idea/
+.idea/*
+.idea/**
+config/
+
 
 # TypeScript cache
 *.tsbuildinfo
